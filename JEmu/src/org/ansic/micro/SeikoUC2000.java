@@ -770,7 +770,7 @@ public class SeikoUC2000 implements CPU, IRQHandler {
         int rs = (opCode & 0x0007);
         
         for(int i=rs; i<=rd; i++) {
-            this.registers[this.regCurrentBank][i] = this.registers[this.regCurrentBank][i+1];
+            this.registers[this.regCurrentBank][i] = this.registers[this.regCurrentBank][(i+1)%32];
         }
         
         this.regPC+=2;
@@ -1367,9 +1367,9 @@ public class SeikoUC2000 implements CPU, IRQHandler {
         if((this.registers[this.regCurrentBank][r] & bitVal) == bitVal) {
             this.regPC += (offset << 1);
         }
-        else {
-            this.regPC+=2;
-        }
+        
+        this.regPC+=2;
+        
         return 2;
     }
     
@@ -1389,9 +1389,9 @@ public class SeikoUC2000 implements CPU, IRQHandler {
         if(this.registers[this.regCurrentBank][r] == value) {
             this.regPC += (offset << 1);
         }
-        else {
-            this.regPC+=2;
-        }
+        
+        this.regPC+=2;
+        
         return 2;
     }
     
