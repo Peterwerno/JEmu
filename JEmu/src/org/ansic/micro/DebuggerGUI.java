@@ -35,7 +35,7 @@ public class DebuggerGUI extends JFrame implements ActionListener {
     public static final int DISPLAY_HEX = 1;
     public static final int DISPLAY_BINARY = 2;
     
-    public static final int DEBUGGER_LINES = 60;
+    public static final int DEBUGGER_LINES = 600;
      
     Debugger debugger;
     long startAddress = 0x1800L;

@@ -310,7 +310,7 @@ public class SeikoUC2000Debugger extends SeikoUC2000 implements Debugger {
             case 0xF400:
             case 0xF800:
             case 0xFC00:
-                return new CodeAndLength(2, "BTJR R" + Integer.toString(d) + ", $" + Integer.toHexString((opCode & 0x0C00) >> 10) + ", $" + Integer.toHexString(s << 1));
+                return new CodeAndLength(2, "CPJR R" + Integer.toString(d) + ", $" + Integer.toHexString((opCode & 0x0C00) >> 10) + ", $" + Integer.toHexString(s << 1));
                 
             default:
                 throw new OpCodeException("OpCode " + opCode + " not supported");
