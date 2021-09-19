@@ -24,13 +24,15 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.*;
 
 /**
  *
  * @author peter
  */
-public class DebuggerGUI extends JFrame implements ActionListener {
+public class DebuggerGUI extends JFrame implements ActionListener, ListSelectionListener {
     public static final int DISPLAY_DECIMAL = 0;
     public static final int DISPLAY_HEX = 1;
     public static final int DISPLAY_BINARY = 2;
@@ -55,6 +57,12 @@ public class DebuggerGUI extends JFrame implements ActionListener {
     javax.swing.Timer timer;
     JButton runContinuous;
     JButton runStop;
+    JTextField addressTextField;
+    JButton goToAddressButton;
+    JTextField contentTextField;
+    JButton contentChangeButton;
+    JTextField opCodeTextField;
+    JButton opCodeChangeButton;
     
     public DebuggerGUI(Debugger debugger) {
         this.debugger = debugger;
@@ -89,6 +97,7 @@ public class DebuggerGUI extends JFrame implements ActionListener {
         scrollpane.setBounds(20,20,550,500);
         opCodeTable.setBounds(20,20,550,500);
         opCodeTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        opCodeTable.getSelectionModel().addListSelectionListener(this);
         scrollpane.setVisible(true);
         
         add(scrollpane);
@@ -116,7 +125,7 @@ public class DebuggerGUI extends JFrame implements ActionListener {
         registerTable.setBounds(590, 20, 550, 500);
         add(scrollpane2);
         
-        setSize(1170, 600);
+        setSize(1170, 610);
         setTitle("Seiko Debugger GUI");
         setLayout(null);
         setVisible(true);
@@ -137,6 +146,36 @@ public class DebuggerGUI extends JFrame implements ActionListener {
         runStop.setBounds(230, 530, 100, 20);
         runStop.addActionListener(this);
         add(runStop);
+        
+        addressTextField = new JTextField();
+        addressTextField.setBounds(10,560,130,20);
+        addressTextField.addActionListener(this);
+        add(addressTextField);
+        
+        goToAddressButton = new JButton("Goto");
+        goToAddressButton.setBounds(140,560,50,20);
+        goToAddressButton.addActionListener(this);
+        add(goToAddressButton);
+        
+        contentTextField = new JTextField();
+        contentTextField.setBounds(200,560,130,20);
+        contentTextField.addActionListener(this);
+        add(contentTextField);
+        
+        contentChangeButton = new JButton("Store");
+        contentChangeButton.setBounds(330,560,50,20);
+        contentChangeButton.addActionListener(this);
+        add(contentChangeButton);
+        
+        opCodeTextField = new JTextField();
+        opCodeTextField.setBounds(390,560,130,20);
+        opCodeTextField.addActionListener(this);
+        add(opCodeTextField);
+        
+        opCodeChangeButton = new JButton("Store");
+        opCodeChangeButton.setBounds(520,560,50,20);
+        opCodeChangeButton.addActionListener(this);
+        add(opCodeChangeButton);
     }
     
     protected void createRegisterTable() {
@@ -199,6 +238,7 @@ public class DebuggerGUI extends JFrame implements ActionListener {
                     addrHex = "0" + addrHex;
                 
                 String bytes = "";
+                String txt = "";
                 for(int x=0; x<cal.getCodeLength(); x++) {
                     byte memVal = this.debugger.readMemoryByte(address + x);
                     String opCode = Integer.toHexString(Byte.toUnsignedInt(memVal));
@@ -206,11 +246,12 @@ public class DebuggerGUI extends JFrame implements ActionListener {
                     while(opCode.length() < 2)
                         opCode = "0" + opCode;
                     
-                    bytes += "$" + opCode + " (" + (char)(memVal) + ") ";
+                    bytes += opCode;
+                    txt += (char)(memVal);
                 }
                 
                 this.addresses[i] = "$"+addrHex;
-                this.opcodes[i] = bytes;
+                this.opcodes[i] = "$" + bytes + " (" + txt + ")";
                 this.mnemonics[i] = cal.getCode();
                 
                 address += cal.getCodeLength();
@@ -234,7 +275,6 @@ public class DebuggerGUI extends JFrame implements ActionListener {
         int fileByte = is.read();
         int pos = 0x1800;
         while(fileByte >= 0) {
-            System.out.println("pos: " + pos + ", value: " + fileByte);
             mem.setByte(pos, (byte)(fileByte));
             fileByte = is.read();
             pos++;
@@ -258,7 +298,6 @@ public class DebuggerGUI extends JFrame implements ActionListener {
                 this.createOpCodeTable();
                 this.createRegisterTable();
                 this.repaint();
-                System.out.println("Run one step " + this.debugger.getProgramCounter());
             } 
             catch (MemoryException | OpCodeException ex) {
                 Logger.getLogger(DebuggerGUI.class.getName()).log(Level.SEVERE, null, ex);
@@ -278,12 +317,118 @@ public class DebuggerGUI extends JFrame implements ActionListener {
                 this.createOpCodeTable();
                 this.createRegisterTable();
                 this.repaint();
-                System.out.println("Run one step " + this.debugger.getProgramCounter());
             } 
             catch (MemoryException | OpCodeException ex) {
                 Logger.getLogger(DebuggerGUI.class.getName()).log(Level.SEVERE, null, ex);
             }
+        }
+        else if(e.getSource() == this.goToAddressButton) {
+            String addressText = this.addressTextField.getText();
             
+            if(addressText.equalsIgnoreCase("pc")) {
+                this.startAddress = this.debugger.getProgramCounter();
+            }
+            else if(addressText.startsWith("$")){
+                try {
+                    int value = Integer.parseInt(addressText.substring(1), 16);
+                    
+                    this.startAddress = value;
+                }
+                catch (NumberFormatException ex) {
+                    
+                }
+            }
+            else {
+                try {
+                    int value = Integer.parseInt(addressText);
+                    
+                    this.startAddress = value;
+                }
+                catch (NumberFormatException ex) {
+                    
+                }
+            }
+            
+            this.createOpCodeTable();
+            this.createRegisterTable();
+            this.repaint();
+        }
+        else if(e.getSource() == this.contentChangeButton) {
+            String contentText = this.contentTextField.getText();
+            String addressText = this.addressTextField.getText();
+            int addressValue = 0;
+            int contentValue = 0;
+            boolean error = false;
+            
+            if(addressText.equalsIgnoreCase("pc")) {
+                addressValue = (int)this.debugger.getProgramCounter();
+            }
+            else if(addressText.startsWith("$")){
+                try {
+                    addressValue = Integer.parseInt(addressText.substring(1), 16);
+                }
+                catch (NumberFormatException ex) {
+                    error = true;
+                }
+            }
+            else {
+                try {
+                    addressValue = Integer.parseInt(addressText);
+                }
+                catch (NumberFormatException ex) {
+                    error = true;
+                }
+            }
+            
+            if(contentText.startsWith("$")){
+                try {
+                    contentValue = Integer.parseInt(contentText.substring(1), 16);
+                }
+                catch (NumberFormatException ex) {
+                    error = true;
+                }
+            }
+            else {
+                try {
+                    contentValue = Integer.parseInt(contentText);
+                }
+                catch (NumberFormatException ex) {
+                    error = true;
+                }
+            }
+            
+            if(!error) {
+                try {
+                    // TODO: This is big endian, cater for little endian in debugger interface!!
+                    this.debugger.writeMemoryByte(addressValue+1, (byte)(contentValue & 0x00FF));
+                    this.debugger.writeMemoryByte(addressValue, (byte)((contentValue >> 8) & 0x00FF));
+                    this.createOpCodeTable();
+                    this.createRegisterTable();
+                    this.repaint();
+                }
+                catch (MemoryException ex) {
+                    // TODO
+                }
+            }
+        }
+    }
+
+    public void copyToTextFields() {
+        int row = this.opCodeTable.getSelectedRow();
+
+        this.addressTextField.setText(this.addresses[row]);
+        this.contentTextField.setText(this.opcodes[row].substring(0, 5));
+        this.opCodeTextField.setText(this.mnemonics[row]);
+    }
+    
+    @Override
+    public void valueChanged(ListSelectionEvent e) {
+        if(e.getSource() instanceof DefaultListSelectionModel) {
+            DefaultListSelectionModel lsm = (DefaultListSelectionModel)e.getSource();
+            
+            if(lsm == this.opCodeTable.getSelectionModel()) {
+                copyToTextFields();
+            }
         }
     }
 }

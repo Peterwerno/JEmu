@@ -580,6 +580,18 @@ public class SeikoUC2000Debugger extends SeikoUC2000 implements Debugger {
     }
     
     /**
+     * Updates a single byte of memory
+     * 
+     * @param address (long) the address
+     * @param value (byte) the new content
+     * @throws MemoryException 
+     */
+    @Override
+    public void writeMemoryByte(long address, byte value) throws MemoryException {
+        this.writeMemory8(address, value);
+    }
+    
+    /**
      * Sets a new program counter value
      * 
      * @param programCounter (long) the new address

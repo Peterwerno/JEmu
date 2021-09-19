@@ -3614,6 +3614,11 @@ public class Z80Debugger extends Z80 implements Debugger {
         return this.readMemory8(address);
     }
     
+    @Override
+    public void writeMemoryByte(long address, byte value) throws MemoryException {
+        this.writeMemory8(address, value);
+    }
+    
     protected String getRegisterName8(int registerNum) throws OpCodeException {
         switch (registerNum) {
             case 0x00:

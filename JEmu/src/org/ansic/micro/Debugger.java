@@ -153,5 +153,14 @@ public interface Debugger extends CPU {
      */
     public int getRegisterSize(String registerName) throws IllegalRegisterException;
     
+    /**
+     * Returns a byte from memory
+     * 
+     * @param address
+     * @return
+     * @throws MemoryException 
+     */
     public byte readMemoryByte(long address) throws MemoryException;
+    
+    public void writeMemoryByte(long address, byte value) throws MemoryException;
 }

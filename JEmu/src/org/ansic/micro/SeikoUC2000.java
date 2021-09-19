@@ -225,7 +225,7 @@ public class SeikoUC2000 implements CPU, IRQHandler {
         
         this.setFlag(FLAG_C, (this.registers[this.regCurrentBank][rd] & 0x10) == 0x10);
         this.registers[this.regCurrentBank][rd] &= 0x0F;
-        this.setFlag(FLAG_Z, this.registers[this.regCurrentBank][rd] == 0);
+//        this.setFlag(FLAG_Z, this.registers[this.regCurrentBank][rd] == 0);
         
         this.regPC+=2;
         
@@ -249,7 +249,7 @@ public class SeikoUC2000 implements CPU, IRQHandler {
         
         this.setFlag(FLAG_C, (this.registers[this.regCurrentBank][rd] & 0x10) == 0x10);
         this.registers[this.regCurrentBank][rd] &= 0x0F;
-        this.setFlag(FLAG_Z, this.registers[this.regCurrentBank][rd] == 0);
+//        this.setFlag(FLAG_Z, this.registers[this.regCurrentBank][rd] == 0);
 
         this.regPC+=2;
         
@@ -315,7 +315,7 @@ public class SeikoUC2000 implements CPU, IRQHandler {
         
         this.setFlag(FLAG_C, (this.registers[this.regCurrentBank][rd] & 0x10) == 0x10);
         this.registers[this.regCurrentBank][rd] &= 0x0F;
-        this.setFlag(FLAG_Z, this.registers[this.regCurrentBank][rd] == 0);
+//        this.setFlag(FLAG_Z, this.registers[this.regCurrentBank][rd] == 0);
         
         this.regPC+=2;
         
@@ -339,7 +339,7 @@ public class SeikoUC2000 implements CPU, IRQHandler {
         
         this.setFlag(FLAG_C, (this.registers[this.regCurrentBank][rd] & 0x10) == 0x10);
         this.registers[this.regCurrentBank][rd] &= 0x0F;
-        this.setFlag(FLAG_Z, this.registers[this.regCurrentBank][rd] == 0);
+//        this.setFlag(FLAG_Z, this.registers[this.regCurrentBank][rd] == 0);
 
         this.regPC+=2;
         
@@ -402,16 +402,18 @@ public class SeikoUC2000 implements CPU, IRQHandler {
         int rs = (opCode & 0x001F);
         int k = ((rs-rd) % 8);
         boolean zero = true;
-        
+        boolean carry = false;
+
         for(int i=0; i<k+1; i++) {
             this.registers[this.regCurrentBank][rd+i] += this.registers[this.regCurrentBank][rs-k+i];
-            if((this.regFlags & FLAG_C) == FLAG_C) this.registers[this.regCurrentBank][rd+i]++;
-            this.setFlag(FLAG_C, ((this.registers[this.regCurrentBank][rd+i] & 0x10) == 0x10));
+            if(carry) this.registers[this.regCurrentBank][rd+i]++;
+            carry = ((this.registers[this.regCurrentBank][rd+i] & 0x10) == 0x10);
             this.registers[this.regCurrentBank][rd+i] &= 0x0F;
             if(this.registers[this.regCurrentBank][rd+i] != 0) zero = false;
         }
         
-        this.setFlag(FLAG_Z, zero);
+        this.setFlag(FLAG_C, carry);    // TODO: Check!! really??
+//        this.setFlag(FLAG_Z, zero);
         
         this.regPC+=2;
         
@@ -429,18 +431,20 @@ public class SeikoUC2000 implements CPU, IRQHandler {
         int rs = (opCode & 0x001F);
         int k = ((rs-rd) % 8);
         boolean zero = true;
+        boolean carry = false;
         
         for(int i=0; i<k+1; i++) {
             this.registers[this.regCurrentBank][rd+i] += this.registers[this.regCurrentBank][rs-k+i];
-            if((this.regFlags & FLAG_C) == FLAG_C) this.registers[this.regCurrentBank][rd+i]++;
+            if(carry) this.registers[this.regCurrentBank][rd+i]++;
             if(this.registers[this.regCurrentBank][rd+i] > 9)
                 this.registers[this.regCurrentBank][rd+i] += 6;
-            this.setFlag(FLAG_C, ((this.registers[this.regCurrentBank][rd+i] & 0x10) == 0x10));
+            carry = ((this.registers[this.regCurrentBank][rd+i] & 0x10) == 0x10);
             this.registers[this.regCurrentBank][rd+i] &= 0x0F;
             if(this.registers[this.regCurrentBank][rd+i] != 0) zero = false;
         }
         
-        this.setFlag(FLAG_Z, zero);
+        this.setFlag(FLAG_C, carry);    // TODO: Check!! really??
+//        this.setFlag(FLAG_Z, zero);
         
         this.regPC+=2;
         
@@ -458,16 +462,18 @@ public class SeikoUC2000 implements CPU, IRQHandler {
         int rs = (opCode & 0x001F);
         int k = ((rs-rd) % 8);
         boolean zero = true;
+        boolean carry = false;
         
         for(int i=0; i<k+1; i++) {
             this.registers[this.regCurrentBank][rd+i] -= this.registers[this.regCurrentBank][rs-k+i];
-            if((this.regFlags & FLAG_C) == FLAG_C) this.registers[this.regCurrentBank][rd+i]--;
-            this.setFlag(FLAG_C, ((this.registers[this.regCurrentBank][rd+i] & 0x10) == 0x10));
+            if(carry) this.registers[this.regCurrentBank][rd+i]--;
+            carry = ((this.registers[this.regCurrentBank][rd+i] & 0x10) == 0x10);
             this.registers[this.regCurrentBank][rd+i] &= 0x0F;
             if(this.registers[this.regCurrentBank][rd+i] != 0) zero = false;
         }
         
-        this.setFlag(FLAG_Z, zero);
+        this.setFlag(FLAG_C, carry);    // TODO: Check!! really??
+//        this.setFlag(FLAG_Z, zero);
         
         this.regPC+=2;
         
@@ -485,19 +491,21 @@ public class SeikoUC2000 implements CPU, IRQHandler {
         int rs = (opCode & 0x001F);
         int k = ((rs-rd) % 8);
         boolean zero = true;
+        boolean carry = false;
         
         for(int i=0; i<k+1; i++) {
             this.registers[this.regCurrentBank][rd+i] -= this.registers[this.regCurrentBank][rs-k+i];
-            if((this.regFlags & FLAG_C) == FLAG_C) this.registers[this.regCurrentBank][rd+i]--;
-            if(this.registers[this.regCurrentBank][rd+i] > 9)
+            if(carry) this.registers[this.regCurrentBank][rd+i]--;
+            if((this.registers[this.regCurrentBank][rd+i] & 0x0F) > 9)
                 this.registers[this.regCurrentBank][rd+i] -= 6;
-            this.setFlag(FLAG_C, ((this.registers[this.regCurrentBank][rd+i] & 0x10) == 0x10));
+            carry = ((this.registers[this.regCurrentBank][rd+i] & 0x10) == 0x10);
             this.registers[this.regCurrentBank][rd+i] &= 0x0F;
             if(this.registers[this.regCurrentBank][rd+i] != 0) zero = false;
 
         }
         
-        this.setFlag(FLAG_Z, zero);
+        this.setFlag(FLAG_C, carry);    // TODO: Check!! really??
+//        this.setFlag(FLAG_Z, zero);
         
         this.regPC+=2;
         
@@ -534,13 +542,14 @@ public class SeikoUC2000 implements CPU, IRQHandler {
         
         this.setFlag(FLAG_Z, false);
         this.setFlag(FLAG_C, false);
-        for(int i=0; i<k+1; i++) {
-            if(this.registers[this.regCurrentBank][rd+k-i] < this.registers[this.regCurrentBank][rs+i]) {
+        for(int i=k+1; i>=0; i--) {
+            if(this.registers[this.regCurrentBank][rd+i] < this.registers[this.regCurrentBank][rs-k+i]) {
                 this.setFlag(FLAG_C, true);
                 this.regPC += 2;
                 return 2;
             }
-            else if(this.registers[this.regCurrentBank][rd+k-i] < this.registers[this.regCurrentBank][rs+i]) {
+            else if(this.registers[this.regCurrentBank][rd+i] > this.registers[this.regCurrentBank][rs-k+i]) {
+                this.setFlag(FLAG_C, false);
                 this.regPC += 2;
                 return 2;
             }
@@ -1163,8 +1172,6 @@ public class SeikoUC2000 implements CPU, IRQHandler {
     protected int opCALL(int opCode) throws MemoryException {
         int address = (opCode & 0x0FFF) << 1;
         
-        System.out.println("calling: " + address + " = $" + Integer.toHexString(address));
-        
         // Special handling for some OS routines
         switch (address) {
             case 0x178C:    // print0-10
@@ -1179,12 +1186,7 @@ public class SeikoUC2000 implements CPU, IRQHandler {
             case 0x179E:    // print0-1
                 for(int i=0; i<(0x17A0-address)/2; i++) {
                     
-                    System.out.println("address: " + (this.regSA) + " = $" + Integer.toHexString((this.regSA)));
                     byte value = this.readMemory8(this.regSA);
-                    System.out.println("printing " + (char)(value));
-//                    System.out.println("address: " + (0x1800 + this.regSA) + " = $" + Integer.toHexString((0x1800 + this.regSA)));
-//                    byte value = this.readMemory8(0x1800 + this.regSA);
-//                    System.out.println("printing " + (char)(value));
                     this.writeIO8(1, value);
                     this.regSA++;
                 }
@@ -1404,7 +1406,6 @@ public class SeikoUC2000 implements CPU, IRQHandler {
     @Override
     public int runNextOpCode() throws MemoryException, OpCodeException {
         int opCode = Short.toUnsignedInt(readMemory16(Short.toUnsignedLong(this.regPC)));
-        System.out.println("running " + Integer.toHexString(opCode));
         
         if((opCode >= 0x0000) && (opCode <= 0x03FF)) return opADD(opCode);
         if((opCode >= 0x0400) && (opCode <= 0x07FF)) return opADB(opCode);
