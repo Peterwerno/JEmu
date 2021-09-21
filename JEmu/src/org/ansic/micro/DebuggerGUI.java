@@ -20,6 +20,7 @@ package org.ansic.micro;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -66,6 +67,9 @@ public class DebuggerGUI extends JFrame implements ActionListener, ListSelection
     JTextField registerNameTextField;
     JTextField registerValueTextField;
     JButton registerChangeButton;
+    JButton breakPointButton;
+    
+    List<Integer> breakPoints = new ArrayList<>();
     
     public DebuggerGUI(Debugger debugger) {
         this.debugger = debugger;
@@ -152,14 +156,19 @@ public class DebuggerGUI extends JFrame implements ActionListener, ListSelection
         add(runStop);
         
         addressTextField = new JTextField();
-        addressTextField.setBounds(10,560,130,20);
+        addressTextField.setBounds(10,560,80,20);
         addressTextField.addActionListener(this);
         add(addressTextField);
         
         goToAddressButton = new JButton("Goto");
-        goToAddressButton.setBounds(140,560,50,20);
+        goToAddressButton.setBounds(90,560,50,20);
         goToAddressButton.addActionListener(this);
         add(goToAddressButton);
+        
+        breakPointButton = new JButton("Break");
+        breakPointButton.setBounds(140,560,50,20);
+        breakPointButton.addActionListener(this);
+        add(breakPointButton);
         
         contentTextField = new JTextField();
         contentTextField.setBounds(200,560,130,20);
@@ -340,6 +349,13 @@ public class DebuggerGUI extends JFrame implements ActionListener, ListSelection
                 this.copyToTextFields();
                 this.copyRegisterToTextField();
                 this.repaint();
+                
+                int currPC = (int)this.debugger.getProgramCounter();
+                for(Integer address : this.breakPoints) {
+                    if(currPC == address) {
+                        this.timer.stop();
+                    }
+                }
 //                if(this.debugger.getProgramCounter() == 0x18F4) this.timer.stop();
             } 
             catch (MemoryException | OpCodeException ex) {
@@ -467,6 +483,41 @@ public class DebuggerGUI extends JFrame implements ActionListener, ListSelection
                 }
                 catch (IllegalRegisterException ex) {
                     // Nothing to do here :)
+                }
+            }
+        }
+        else if(e.getSource() == this.breakPointButton) {
+            String addressText = this.addressTextField.getText();
+            Integer address = null; 
+            boolean error = false;
+            
+            if(addressText.equalsIgnoreCase("pc")) {
+                address = (int)this.debugger.getProgramCounter();
+            }
+            else if(addressText.startsWith("$")){
+                try {
+                    address = Integer.parseInt(addressText.substring(1), 16);
+                }
+                catch (NumberFormatException ex) {
+                    error = true;
+                }
+            }
+            else {
+                try {
+                    address = Integer.parseInt(addressText);
+                }
+                catch (NumberFormatException ex) {
+                    error = true;
+                }
+            }
+            if(!error) {
+                if(this.breakPoints.contains(address)) {
+                    // remove when it exists
+                    this.breakPoints.remove(address);
+                }
+                else {
+                    // add when new
+                    this.breakPoints.add(address);
                 }
             }
         }
