@@ -32,8 +32,8 @@ public class SeikoUC2000 implements CPU, IRQHandler {
     
     public static final int IRQ_SET_BUTTON      = 0x0001;
     public static final int IRQ_MODE_BUTTON     = 0x0002;
-    public static final int IRQ_TRANSMIT_BUTTON = 0x0003;
-    public static final int IRQ_SELECT_BUTTON   = 0x0004;
+    public static final int IRQ_TRANSMIT_BUTTON = 0x0004;
+    public static final int IRQ_SELECT_BUTTON   = 0x0008;
     public static final int IRQ_SECOND_TIMER    = 0x0010;
     public static final int IRQ_REDRAW_SCREEN   = 0x0020;
     
@@ -45,6 +45,8 @@ public class SeikoUC2000 implements CPU, IRQHandler {
     byte regFlags;
     byte regCurrentBank;
     byte regAdditionalBank;
+    int irq = 0;
+    boolean inIrq = false;
     
     List<Memory> memoryBlocks;
     List<IO> IOBlocks;
@@ -820,7 +822,7 @@ public class SeikoUC2000 implements CPU, IRQHandler {
             value |= this.registers[this.regCurrentBank][i];
         }
         
-        this.regSA = (short)((value) + 0x1000);
+        this.regSA = (short)((value & 0x07FF) + 0x1800);
         
         this.regPC+=2;
         return 2;
@@ -1113,12 +1115,12 @@ public class SeikoUC2000 implements CPU, IRQHandler {
         int rs = (opCode & 0x001F);
         int k = ((rs-rd) % 8);
         
-        for(int i=rd; i<rs; i++) {
-            this.registers[this.regAdditionalBank][i] = this.registers[this.regCurrentBank][i];
-        }
-//        for(int i=0; i<k+1; i++) {
-//            this.registers[this.regAdditionalBank][rd+i] = this.registers[this.regCurrentBank][rs-k-i];
+//        for(int i=rd; i<rs; i++) {
+//            this.registers[this.regAdditionalBank][i] = this.registers[this.regCurrentBank][i];
 //        }
+        for(int i=0; i<k+1; i++) {
+            this.registers[this.regAdditionalBank][rd+i] = this.registers[this.regCurrentBank][rs-k+i];
+        }
         
         this.regPC+=2;
         return 2;
@@ -1151,12 +1153,12 @@ public class SeikoUC2000 implements CPU, IRQHandler {
         int rs = (opCode & 0x001F);
         int k = ((rs-rd) % 8);
         
-        for(int i=rd; i<rs; i++) {
-            this.registers[this.regCurrentBank][i] = this.registers[this.regAdditionalBank][i];
-        }
-//        for(int i=0; i<k+1; i++) {
-//            this.registers[this.regCurrentBank][rd+i] = this.registers[this.regAdditionalBank][rs-k-i];
+//        for(int i=rd; i<rs; i++) {
+//            this.registers[this.regCurrentBank][i] = this.registers[this.regAdditionalBank][i];
 //        }
+        for(int i=0; i<k+1; i++) {
+            this.registers[this.regCurrentBank][rd+i] = this.registers[this.regAdditionalBank][rs-k+i];
+        }
         
         this.regPC+=2;
         return 2;
@@ -1224,7 +1226,11 @@ public class SeikoUC2000 implements CPU, IRQHandler {
         return 2;
     }
     
-    protected int opHLT(int opCode) {
+    protected int opHLT(int opCode) throws MemoryException {
+        if(this.inIrq) {
+            this.inIrq = false;
+            this.opRET(0xB000);
+        }
         return 2;
     }
     
@@ -1403,8 +1409,52 @@ public class SeikoUC2000 implements CPU, IRQHandler {
         return 2;
     }
     
+    /**
+     * Before each opcode, call this method to check if an IRQ is waiting
+     * 
+     * @throws MemoryException
+     */
+    public void checkIrq() throws MemoryException {
+        if(this.inIrq) return;
+        if(this.irq != 0) {
+            // In order of precedence
+            if((this.irq & IRQ_SECOND_TIMER) != 0) {
+                this.inIrq = true;
+                this.opCALL(0xAC01);
+                this.irq -= IRQ_SECOND_TIMER;
+            }
+            else if((this.irq & IRQ_REDRAW_SCREEN) != 0) {
+                this.inIrq = true;
+                this.opCALL(0xAC0D);
+                this.irq -= IRQ_REDRAW_SCREEN;
+            }
+            else if((this.irq & IRQ_SET_BUTTON) != 0) {
+                this.inIrq = true;
+                this.opCALL(0xAC08);
+                this.irq -= IRQ_SET_BUTTON;
+            }
+            else if((this.irq & IRQ_MODE_BUTTON) != 0) {
+                this.inIrq = true;
+                this.opCALL(0xAC05);
+                this.irq -= IRQ_MODE_BUTTON;
+            }
+            else if((this.irq & IRQ_TRANSMIT_BUTTON) != 0) {
+                this.inIrq = true;
+                this.opCALL(0xAC06);
+                this.irq -= IRQ_TRANSMIT_BUTTON;
+            }
+            else if((this.irq & IRQ_SELECT_BUTTON) != 0) {
+                this.inIrq = true;
+                this.opCALL(0xAC07);
+                this.irq -= IRQ_SELECT_BUTTON;
+            }
+        }
+    }
+    
     @Override
     public int runNextOpCode() throws MemoryException, OpCodeException {
+        checkIrq();
+        
         int opCode = Short.toUnsignedInt(readMemory16(Short.toUnsignedLong(this.regPC)));
         
         if((opCode >= 0x0000) && (opCode <= 0x03FF)) return opADD(opCode);
@@ -1481,27 +1531,27 @@ public class SeikoUC2000 implements CPU, IRQHandler {
     public void handleIRQ(int IRQNumber) {
         switch (IRQNumber) {
             case IRQ_SET_BUTTON:
-                this.regPC = 0x1820;
+                this.irq |= IRQNumber;
                 break;
                 
             case IRQ_MODE_BUTTON:
-                this.regPC = 0x180A;
+                this.irq |= IRQNumber;
                 break;
                 
             case IRQ_TRANSMIT_BUTTON:
-                this.regPC = 0x180C;
+                this.irq |= IRQNumber;
                 break;
                 
             case IRQ_SELECT_BUTTON:
-                this.regPC = 0x180E;
+                this.irq |= IRQNumber;
                 break;
                 
             case IRQ_SECOND_TIMER:
-                this.regPC = 0x1802;  // 1 sec timer
+                this.irq |= IRQNumber;
                 break;
                 
             case IRQ_REDRAW_SCREEN:
-                this.regPC = 0x181A;  // refresh display
+                this.irq |= IRQNumber;
                 break;
                 
             default:

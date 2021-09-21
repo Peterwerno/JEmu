@@ -365,7 +365,7 @@ public class SeikoUC2000Display extends JFrame implements IO, ActionListener {
         rightButton.setBorderPainted(false);
         rightButton.addActionListener(this);
         
-        timer = new javax.swing.Timer(5000, this);
+        timer = new javax.swing.Timer(1000, this);
         
         add(leftButton);
         add(modeButton);
@@ -559,7 +559,6 @@ public class SeikoUC2000Display extends JFrame implements IO, ActionListener {
     @Override
     public void setByte(long address, byte value) throws MemoryException {
         if(address == this.ioPortStart) {
-            System.out.println("set command to " + value + " = $" + Integer.toHexString(Byte.toUnsignedInt(value)));
             this.command = Byte.toUnsignedInt(value);
         }
         else if(address == (this.ioPortStart + 1)) {
@@ -576,7 +575,6 @@ public class SeikoUC2000Display extends JFrame implements IO, ActionListener {
                     this.command = 64;
             }
             else {
-                System.out.println("Command: " + this.command + " " + Integer.toHexString(this.command));
                 switch (this.command) {
                     case 0x79:
                         this.contrast += 10;

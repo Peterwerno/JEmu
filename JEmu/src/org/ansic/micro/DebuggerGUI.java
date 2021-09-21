@@ -63,6 +63,9 @@ public class DebuggerGUI extends JFrame implements ActionListener, ListSelection
     JButton contentChangeButton;
     JTextField opCodeTextField;
     JButton opCodeChangeButton;
+    JTextField registerNameTextField;
+    JTextField registerValueTextField;
+    JButton registerChangeButton;
     
     public DebuggerGUI(Debugger debugger) {
         this.debugger = debugger;
@@ -121,6 +124,7 @@ public class DebuggerGUI extends JFrame implements ActionListener, ListSelection
         JScrollPane scrollpane2 = new JScrollPane(registerTable);
         scrollpane2.setBounds(590,20,550,500);
         registerTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        registerTable.getSelectionModel().addListSelectionListener(this);
         scrollpane2.setVisible(true);
         registerTable.setBounds(590, 20, 550, 500);
         add(scrollpane2);
@@ -135,7 +139,7 @@ public class DebuggerGUI extends JFrame implements ActionListener, ListSelection
         runStepButton.addActionListener(this);
         add(runStepButton);
         
-        timer = new javax.swing.Timer(10, this);
+        timer = new javax.swing.Timer(1, this);
         
         runContinuous = new JButton("Run every 1 sec");
         runContinuous.setBounds(120, 530, 100, 20);
@@ -176,6 +180,21 @@ public class DebuggerGUI extends JFrame implements ActionListener, ListSelection
         opCodeChangeButton.setBounds(520,560,50,20);
         opCodeChangeButton.addActionListener(this);
         add(opCodeChangeButton);
+
+        registerNameTextField = new JTextField();
+        registerNameTextField.setBounds(590,560,250,20);
+        registerNameTextField.addActionListener(this);
+        add(registerNameTextField);
+        
+        registerValueTextField = new JTextField();
+        registerValueTextField.setBounds(850,560,230,20);
+        registerValueTextField.addActionListener(this);
+        add(registerValueTextField);
+        
+        registerChangeButton = new JButton("Change");
+        registerChangeButton.setBounds(1090,560,60,20);
+        registerChangeButton.addActionListener(this);
+        add(registerChangeButton);
     }
     
     protected void createRegisterTable() {
@@ -297,6 +316,8 @@ public class DebuggerGUI extends JFrame implements ActionListener, ListSelection
                 this.startAddress = this.debugger.getProgramCounter();
                 this.createOpCodeTable();
                 this.createRegisterTable();
+                this.copyToTextFields();
+                this.copyRegisterToTextField();
                 this.repaint();
             } 
             catch (MemoryException | OpCodeException ex) {
@@ -316,7 +337,10 @@ public class DebuggerGUI extends JFrame implements ActionListener, ListSelection
                 this.startAddress = this.debugger.getProgramCounter();
                 this.createOpCodeTable();
                 this.createRegisterTable();
+                this.copyToTextFields();
+                this.copyRegisterToTextField();
                 this.repaint();
+//                if(this.debugger.getProgramCounter() == 0x18F4) this.timer.stop();
             } 
             catch (MemoryException | OpCodeException ex) {
                 Logger.getLogger(DebuggerGUI.class.getName()).log(Level.SEVERE, null, ex);
@@ -411,14 +435,60 @@ public class DebuggerGUI extends JFrame implements ActionListener, ListSelection
                 }
             }
         }
+        else if(e.getSource() == this.registerChangeButton) {
+            String valueText = this.registerValueTextField.getText();
+            String registerName = this.registerNameTextField.getText();
+            int value = 0;
+            boolean error = false;
+            
+            if(valueText.startsWith("$")){
+                try {
+                    value = Integer.parseInt(valueText.substring(1), 16);
+                }
+                catch (NumberFormatException ex) {
+                    error = true;
+                }
+            }
+            else {
+                try {
+                    value = Integer.parseInt(valueText);
+                }
+                catch (NumberFormatException ex) {
+                    error = true;
+                }
+            }
+            
+            if(!error) {
+                try {
+                    debugger.setRegisterValue(registerName, value);
+                    this.createOpCodeTable();
+                    this.createRegisterTable();
+                    this.repaint();
+                }
+                catch (IllegalRegisterException ex) {
+                    // Nothing to do here :)
+                }
+            }
+        }
     }
 
     public void copyToTextFields() {
         int row = this.opCodeTable.getSelectedRow();
 
-        this.addressTextField.setText(this.addresses[row]);
-        this.contentTextField.setText(this.opcodes[row].substring(0, 5));
-        this.opCodeTextField.setText(this.mnemonics[row]);
+        if(row >= 0) {
+            this.addressTextField.setText(this.addresses[row]);
+            this.contentTextField.setText(this.opcodes[row].substring(0, 5));
+            this.opCodeTextField.setText(this.mnemonics[row]);
+        }
+    }
+    
+    public void copyRegisterToTextField() {
+        int row = this.registerTable.getSelectedRow();
+        
+        if(row >= 0) {
+            this.registerNameTextField.setText(this.registerNames[row]);
+            this.registerValueTextField.setText(this.registerValues[row]);
+        }
     }
     
     @Override
@@ -428,6 +498,9 @@ public class DebuggerGUI extends JFrame implements ActionListener, ListSelection
             
             if(lsm == this.opCodeTable.getSelectionModel()) {
                 copyToTextFields();
+            }
+            else if(lsm == this.registerTable.getSelectionModel()) {
+                copyRegisterToTextField();
             }
         }
     }
