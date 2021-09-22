@@ -227,7 +227,6 @@ public class SeikoUC2000 implements CPU, IRQHandler {
         
         this.setFlag(FLAG_C, (this.registers[this.regCurrentBank][rd] & 0x10) == 0x10);
         this.registers[this.regCurrentBank][rd] &= 0x0F;
-//        this.setFlag(FLAG_Z, this.registers[this.regCurrentBank][rd] == 0);
         
         this.regPC+=2;
         
@@ -251,7 +250,6 @@ public class SeikoUC2000 implements CPU, IRQHandler {
         
         this.setFlag(FLAG_C, (this.registers[this.regCurrentBank][rd] & 0x10) == 0x10);
         this.registers[this.regCurrentBank][rd] &= 0x0F;
-//        this.setFlag(FLAG_Z, this.registers[this.regCurrentBank][rd] == 0);
 
         this.regPC+=2;
         
@@ -317,7 +315,6 @@ public class SeikoUC2000 implements CPU, IRQHandler {
         
         this.setFlag(FLAG_C, (this.registers[this.regCurrentBank][rd] & 0x10) == 0x10);
         this.registers[this.regCurrentBank][rd] &= 0x0F;
-//        this.setFlag(FLAG_Z, this.registers[this.regCurrentBank][rd] == 0);
         
         this.regPC+=2;
         
@@ -341,7 +338,6 @@ public class SeikoUC2000 implements CPU, IRQHandler {
         
         this.setFlag(FLAG_C, (this.registers[this.regCurrentBank][rd] & 0x10) == 0x10);
         this.registers[this.regCurrentBank][rd] &= 0x0F;
-//        this.setFlag(FLAG_Z, this.registers[this.regCurrentBank][rd] == 0);
 
         this.regPC+=2;
         
@@ -403,7 +399,6 @@ public class SeikoUC2000 implements CPU, IRQHandler {
         int rd = (opCode & 0x03E0) >> 5;
         int rs = (opCode & 0x001F);
         int k = ((rs-rd) % 8);
-        boolean zero = true;
         boolean carry = false;
 
         for(int i=0; i<k+1; i++) {
@@ -411,11 +406,9 @@ public class SeikoUC2000 implements CPU, IRQHandler {
             if(carry) this.registers[this.regCurrentBank][rd+i]++;
             carry = ((this.registers[this.regCurrentBank][rd+i] & 0x10) == 0x10);
             this.registers[this.regCurrentBank][rd+i] &= 0x0F;
-            if(this.registers[this.regCurrentBank][rd+i] != 0) zero = false;
         }
         
-        this.setFlag(FLAG_C, carry);    // TODO: Check!! really??
-//        this.setFlag(FLAG_Z, zero);
+        this.setFlag(FLAG_C, carry);
         
         this.regPC+=2;
         
@@ -432,7 +425,6 @@ public class SeikoUC2000 implements CPU, IRQHandler {
         int rd = (opCode & 0x03E0) >> 5;
         int rs = (opCode & 0x001F);
         int k = ((rs-rd) % 8);
-        boolean zero = true;
         boolean carry = false;
         
         for(int i=0; i<k+1; i++) {
@@ -442,11 +434,9 @@ public class SeikoUC2000 implements CPU, IRQHandler {
                 this.registers[this.regCurrentBank][rd+i] += 6;
             carry = ((this.registers[this.regCurrentBank][rd+i] & 0x10) == 0x10);
             this.registers[this.regCurrentBank][rd+i] &= 0x0F;
-            if(this.registers[this.regCurrentBank][rd+i] != 0) zero = false;
         }
         
-        this.setFlag(FLAG_C, carry);    // TODO: Check!! really??
-//        this.setFlag(FLAG_Z, zero);
+        this.setFlag(FLAG_C, carry);
         
         this.regPC+=2;
         
@@ -474,8 +464,8 @@ public class SeikoUC2000 implements CPU, IRQHandler {
             if(this.registers[this.regCurrentBank][rd+i] != 0) zero = false;
         }
         
-        this.setFlag(FLAG_C, carry);    // TODO: Check!! really??
-//        this.setFlag(FLAG_Z, zero);
+        this.setFlag(FLAG_C, carry);
+        this.setFlag(FLAG_Z, zero);
         
         this.regPC+=2;
         
@@ -506,8 +496,8 @@ public class SeikoUC2000 implements CPU, IRQHandler {
 
         }
         
-        this.setFlag(FLAG_C, carry);    // TODO: Check!! really??
-//        this.setFlag(FLAG_Z, zero);
+        this.setFlag(FLAG_C, carry);
+        this.setFlag(FLAG_Z, zero);
         
         this.regPC+=2;
         
@@ -621,6 +611,7 @@ public class SeikoUC2000 implements CPU, IRQHandler {
         int i = (opCode & 0x001E) >> 1;
         
         this.registers[this.regCurrentBank][rd] &= i;
+        this.setFlag(FLAG_Z, this.registers[this.regCurrentBank][rd] == 0);
         
         this.regPC+=2;
         return 2;
@@ -669,7 +660,7 @@ public class SeikoUC2000 implements CPU, IRQHandler {
         int rs = (rd & 0x0018) | (opCode & 0x0007);
         boolean carry = true;
         
-        for(int i=rs; i<=rd; i++) {
+        for(int i=rd; i<=rs; i++) {
             if(carry) this.registers[this.regCurrentBank][i]++;
             carry = (this.registers[this.regCurrentBank][i] & 0x10) == 0x10;
             this.registers[this.regCurrentBank][i] &= 0x0F;
@@ -692,7 +683,7 @@ public class SeikoUC2000 implements CPU, IRQHandler {
         int rs = (rd & 0x0018) | (opCode & 0x0007);
         boolean carry = true;
         
-        for(int i=rs; i<=rd; i++) {
+        for(int i=rd; i<=rs; i++) {
             if(carry) this.registers[this.regCurrentBank][i]++;
             if(this.registers[this.regCurrentBank][i] > 9) this.registers[this.regCurrentBank][i] += 6;
             carry = (this.registers[this.regCurrentBank][i] & 0x10) == 0x10;
@@ -714,15 +705,18 @@ public class SeikoUC2000 implements CPU, IRQHandler {
     protected int opDEC(int opCode) {
         int rd = (opCode & 0x03E0) >> 5;
         int rs = (rd & 0x0018) | (opCode & 0x0007);
+        boolean zero = true;
         boolean carry = true;
         
-        for(int i=rs; i<=rd; i++) {
+        for(int i=rd; i<=rs; i++) {
             if(carry) this.registers[this.regCurrentBank][i]--;
             carry = (this.registers[this.regCurrentBank][i] & 0x10) == 0x10;
             this.registers[this.regCurrentBank][i] &= 0x0F;
+            if(this.registers[this.regCurrentBank][i] != 0) zero = false;
         }
         
         this.setFlag(FLAG_C, carry);
+        this.setFlag(FLAG_Z, zero);
         
         this.regPC+=2;
         return 2;
@@ -737,16 +731,19 @@ public class SeikoUC2000 implements CPU, IRQHandler {
     protected int opDECB(int opCode) {
         int rd = (opCode & 0x03E0) >> 5;
         int rs = (rd & 0x0018) | (opCode & 0x0007);
+        boolean zero = true;
         boolean carry = true;
         
-        for(int i=rs; i<=rd; i++) {
+        for(int i=rd; i<=rs; i++) {
             if(carry) this.registers[this.regCurrentBank][i]--;
             if(this.registers[this.regCurrentBank][i] < 0) this.registers[this.regCurrentBank][i] -= 6;
             carry = (this.registers[this.regCurrentBank][i] & 0x10) == 0x10;
             this.registers[this.regCurrentBank][i] &= 0x0F;
+            if(this.registers[this.regCurrentBank][i] != 0) zero = false;
         }
 
         this.setFlag(FLAG_C, carry);
+        this.setFlag(FLAG_Z, zero);
         
         this.regPC+=2;
         return 2;
@@ -793,12 +790,47 @@ public class SeikoUC2000 implements CPU, IRQHandler {
      * 
      * @param opCode
      * @return 
+     * @throws MemoryException
      */
     protected int opIN(int opCode) throws MemoryException {
         int rd = (opCode & 0x03E0) >> 5;
         int port = (opCode & 0x000F);
         
         this.registers[this.regCurrentBank][rd] = this.readIO8(port);
+        
+        this.regPC+=2;
+        return 2;
+    }
+    
+    /**
+     * Operation OUT - write to IO port
+     * 
+     * @param opCode
+     * @return
+     * @throws MemoryException 
+     */
+    protected int opOUT(int opCode) throws MemoryException {
+        int rs = (opCode & 0x03E0) >> 5;
+        int port = (opCode & 0x000F);
+        
+        this.writeIO8(port, this.registers[this.regCurrentBank][rs]);
+        
+        this.regPC+=2;
+        return 2;
+    }
+    
+    /**
+     * Operation OUTI - write immediate value to IO port
+     * 
+     * @param opCode
+     * @return
+     * @throws MemoryException 
+     */
+    protected int opOUTI(int opCode) throws MemoryException {
+        int value = (opCode & 0x03C0) >> 6;
+        int port = (opCode & 0x000F);
+        
+        this.writeIO8(port, (byte)value);
         
         this.regPC+=2;
         return 2;
@@ -901,8 +933,8 @@ public class SeikoUC2000 implements CPU, IRQHandler {
             boolean half = true;
             byte byteRead = 0;
             
-            for(int i=rd; i<=rs; i++) {
-                byteRead = this.registers[this.regCurrentBank][i];
+            for(int i=rs; i>=rd; i--) {
+                byteRead |= this.registers[this.regCurrentBank][i];
                 if(half) {
                     byteRead <<= 4;
                     half = false;
@@ -910,6 +942,7 @@ public class SeikoUC2000 implements CPU, IRQHandler {
                 else {
                     this.writeMemory8(this.regSA++, byteRead);
                     half = true;
+                    byteRead = 0;
                 }
             }
             if(!half)
@@ -1080,7 +1113,7 @@ public class SeikoUC2000 implements CPU, IRQHandler {
         int rd = (opCode & 0x03E0) >> 5;
         int rs = (rd & 0x0018) | (opCode & 0x0007);
         
-        for(int i=rs; i<=rd; i++) {
+        for(int i=rd; i<=rs; i++) {
             this.registers[this.regCurrentBank][i] = 0;
         }
         
@@ -1418,12 +1451,7 @@ public class SeikoUC2000 implements CPU, IRQHandler {
         if(this.inIrq) return;
         if(this.irq != 0) {
             // In order of precedence
-            if((this.irq & IRQ_SECOND_TIMER) != 0) {
-                this.inIrq = true;
-                this.opCALL(0xAC01);
-                this.irq -= IRQ_SECOND_TIMER;
-            }
-            else if((this.irq & IRQ_REDRAW_SCREEN) != 0) {
+            if((this.irq & IRQ_REDRAW_SCREEN) != 0) {
                 this.inIrq = true;
                 this.opCALL(0xAC0D);
                 this.irq -= IRQ_REDRAW_SCREEN;
@@ -1447,6 +1475,11 @@ public class SeikoUC2000 implements CPU, IRQHandler {
                 this.inIrq = true;
                 this.opCALL(0xAC07);
                 this.irq -= IRQ_SELECT_BUTTON;
+            }
+            else if((this.irq & IRQ_SECOND_TIMER) != 0) {
+                this.inIrq = true;
+                this.opCALL(0xAC01);
+                this.irq -= IRQ_SECOND_TIMER;
             }
         }
     }
@@ -1489,6 +1522,8 @@ public class SeikoUC2000 implements CPU, IRQHandler {
             if((opCode & 0x0018) == 0x0008) return opLSHM(opCode);
         }
         if((opCode >= 0x5400) && (opCode <= 0x57FF)) return opIN(opCode);
+        if((opCode >= 0x5800) && (opCode <= 0x5BFF)) return opOUT(opCode);
+        if((opCode >= 0x5C00) && (opCode <= 0x5FFF)) return opOUTI(opCode);
         if((opCode >= 0x6000) && (opCode <= 0x63FF)) {
             if((opCode & 0x0018) == 0x0000) return opPSAM(opCode);
             if((opCode & 0x0018) == 0x0010) return opPLAM(opCode);
