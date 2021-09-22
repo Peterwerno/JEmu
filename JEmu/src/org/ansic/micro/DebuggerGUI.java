@@ -356,7 +356,6 @@ public class DebuggerGUI extends JFrame implements ActionListener, ListSelection
                         this.timer.stop();
                     }
                 }
-//                if(this.debugger.getProgramCounter() == 0x18F4) this.timer.stop();
             } 
             catch (MemoryException | OpCodeException ex) {
                 Logger.getLogger(DebuggerGUI.class.getName()).log(Level.SEVERE, null, ex);
