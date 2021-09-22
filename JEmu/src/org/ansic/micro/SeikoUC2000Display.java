@@ -313,6 +313,8 @@ public class SeikoUC2000Display extends JFrame implements IO, ActionListener {
     JButton stopTimer;
     JButton redrawButton;
     
+    java.awt.Graphics g;
+    
     public SeikoUC2000Display() {
         initialize();
     }
@@ -425,29 +427,9 @@ public class SeikoUC2000Display extends JFrame implements IO, ActionListener {
         }
     }
     
-    @Override
-    public void paint(java.awt.Graphics g) {
-        if(!this.paintLCDOnly) {
-            super.paint(g);
-
-            java.awt.Color brownish = new java.awt.Color(30,30,15);
-            java.awt.Color beige = new java.awt.Color(128,128,77);
-            java.awt.Color lightGrey = new java.awt.Color(196,196,196);
-            java.awt.Color black = new java.awt.Color(0, 0, 0);
-            java.awt.Font font = new java.awt.Font("Courier", java.awt.Font.PLAIN, 80);
-            g.setColor(brownish);
-            g.fillRect(0, 0, 800, 800);
-            g.setColor(beige);
-            g.fillRoundRect(75, 152, 650, 450, 20, 20);
-            g.setColor(lightGrey);
-            g.setFont(font);
-            g.drawString("SEIKO", 30, 100);
-            g.drawString("UC-2000", 420, 100);
-            g.fillRoundRect(130, 190, 540, 380, 10, 10);
-            g.fillRect(150, 210, 500, 350);
-            g.setColor(black);
-        }
-
+    public void paintLCD(java.awt.Graphics g) {
+        if(g == null) return ;
+        
         java.awt.Color lcdOn = new java.awt.Color(196-contrast, 196-contrast, 196-contrast);
         java.awt.Color lcdOff= new java.awt.Color(contrast, contrast, contrast);
         for(int row=0;row<4;row++) {
@@ -471,6 +453,34 @@ public class SeikoUC2000Display extends JFrame implements IO, ActionListener {
                 }
             }
         }
+    }
+    
+    @Override
+    public void paint(java.awt.Graphics g) {
+        if(this.g == null) this.g = g;
+        if(!this.paintLCDOnly) {
+            super.paint(g);
+
+            java.awt.Color brownish = new java.awt.Color(30,30,15);
+            java.awt.Color beige = new java.awt.Color(128,128,77);
+            java.awt.Color lightGrey = new java.awt.Color(196,196,196);
+            java.awt.Color black = new java.awt.Color(0, 0, 0);
+            java.awt.Font font = new java.awt.Font("Courier", java.awt.Font.PLAIN, 80);
+            g.setColor(brownish);
+            g.fillRect(0, 0, 800, 800);
+            g.setColor(beige);
+            g.fillRoundRect(75, 152, 650, 450, 20, 20);
+            g.setColor(lightGrey);
+            g.setFont(font);
+            g.drawString("SEIKO", 30, 100);
+            g.drawString("UC-2000", 420, 100);
+            g.fillRoundRect(130, 190, 540, 380, 10, 10);
+            g.fillRect(150, 210, 500, 350);
+            g.setColor(black);
+        }
+
+        paintLCD(g);
+        
         if(!this.paintLCDOnly) {
             leftButton.repaint();
             modeButton.repaint();
@@ -597,6 +607,7 @@ public class SeikoUC2000Display extends JFrame implements IO, ActionListener {
                 }
             }
             
+            this.paintLCDOnly = true;
             this.repaint();
         }
         else {
