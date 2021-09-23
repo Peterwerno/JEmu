@@ -84,8 +84,11 @@ public class DebuggerGUI extends JFrame implements ActionListener, ListSelection
         this.startAddress = debugger.getProgramCounter();
         
         this.dataModel = new AbstractTableModel() {
+            @Override
             public int getColumnCount() { return 3; }
+            @Override
             public int getRowCount() { return DEBUGGER_LINES;}
+            @Override
             public Object getValueAt(int row, int col) { 
                 switch (col) {
                     case 0:
@@ -111,8 +114,11 @@ public class DebuggerGUI extends JFrame implements ActionListener, ListSelection
         //add(table);
       
         this.registerModel = new AbstractTableModel() {
+            @Override
             public int getColumnCount() { return 2; }
+            @Override
             public int getRowCount() { return registerNames.length; }
+            @Override
             public Object getValueAt(int row, int col) {
                 switch (col) {
                     case 0:
@@ -247,8 +253,8 @@ public class DebuggerGUI extends JFrame implements ActionListener, ListSelection
                         throw new AssertionError();
                 }
             }
-            catch (Exception ex) {
-                
+            catch (IllegalRegisterException ex) {
+                // Don't do anything - shouldn't ever get here (TODO?)
             }
             
             pos++;
@@ -284,8 +290,8 @@ public class DebuggerGUI extends JFrame implements ActionListener, ListSelection
                 
                 address += cal.getCodeLength();
             }
-            catch (Exception ex) {
-                ex.printStackTrace();
+            catch (MemoryException | OpCodeException ex) {
+                Logger.getLogger(DebuggerGUI.class.getName()).log(Level.SEVERE, null, ex);
                 this.addresses[i] = "ERR";
                 this.opcodes[i] = "ERR";
                 this.mnemonics[i] = "ERR";
@@ -311,7 +317,6 @@ public class DebuggerGUI extends JFrame implements ActionListener, ListSelection
         is.close();
         
         SeikoUC2000Debugger uc2000 = new SeikoUC2000Debugger(mem, display);
-//        uc2000.setProgramCounter(0x1800);
         
         DebuggerGUI dg = new DebuggerGUI(uc2000);
         display.setHandler((IRQHandler)uc2000);
@@ -358,6 +363,7 @@ public class DebuggerGUI extends JFrame implements ActionListener, ListSelection
                 }
             } 
             catch (MemoryException | OpCodeException ex) {
+                this.timer.stop();
                 Logger.getLogger(DebuggerGUI.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
@@ -448,6 +454,45 @@ public class DebuggerGUI extends JFrame implements ActionListener, ListSelection
                 catch (MemoryException ex) {
                     // TODO
                 }
+            }
+        }
+        else if(e.getSource() == this.opCodeChangeButton) {
+            String opCodeText = this.opCodeTextField.getText();
+            String addressText = this.addressTextField.getText();
+            int addressValue = 0;
+            boolean error = false;
+            
+            if(addressText.equalsIgnoreCase("pc")) {
+                addressValue = (int)this.debugger.getProgramCounter();
+            }
+            else if(addressText.startsWith("$")){
+                try {
+                    addressValue = Integer.parseInt(addressText.substring(1), 16);
+                }
+                catch (NumberFormatException ex) {
+                    error = true;
+                }
+            }
+            else {
+                try {
+                    addressValue = Integer.parseInt(addressText);
+                }
+                catch (NumberFormatException ex) {
+                    error = true;
+                }
+            }
+            
+            try {
+                byte[] opCodes = this.debugger.translate(opCodeText);
+                for(int i=0; i<opCodes.length; i++) {
+                    this.debugger.writeMemoryByte(addressValue + i, opCodes[i]);
+                }
+                this.createOpCodeTable();
+                this.createRegisterTable();
+                this.repaint();
+            }
+            catch (MemoryException | SyntaxErrorException ex) {
+                // Nothing to do here
             }
         }
         else if(e.getSource() == this.registerChangeButton) {
