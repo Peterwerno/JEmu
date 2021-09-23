@@ -20,12 +20,1489 @@ package org.ansic.micro;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringTokenizer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
- *
+ * This class implements a debugger for the Seiko UC 2000 CPU
+ * 
  * @author peter
  */
 public class SeikoUC2000Debugger extends SeikoUC2000 implements Debugger {
+    public abstract static class UC2000Mnemonic extends Debugger.Mnemonic {
+        public boolean isRegisterNumber(String param) {
+            if(param.startsWith("R") || param.startsWith("r")) {
+                return isNumeric(param.substring(1));
+            }
+            else
+                return false;
+        }
+        
+        public int getRegisterNumber(String param) throws SyntaxErrorException {
+            if(param.startsWith("R") || param.startsWith("r")) {
+                return getNumeric(param.substring(1));
+            }
+            else
+                return -1;
+        }
+    }
+    
+    /**
+     * Class ADD
+     * implements the assembler for the ADD command
+     */
+    public static class ADD extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("ADD command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("ADD command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isRegisterNumber(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int reg2 = getRegisterNumber(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg2 < 0) || (reg2 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                
+                return new byte[]{(byte)(reg1>>3), (byte)(((reg1 & 0x07)<<5) | (reg2))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in ADD command");
+        }
+    }
+    
+    /**
+     * Class ADB
+     * implements the assembler for the ADB command
+     */
+    public static class ADB extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("ADB command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("ADB command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isRegisterNumber(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int reg2 = getRegisterNumber(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg2 < 0) || (reg2 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                
+                return new byte[]{(byte)(0x04 | (reg1>>3)), (byte)(((reg1 & 0x07)<<5) | (reg2))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in ADB command");
+        }
+    }
+    
+    /**
+     * Class SUB
+     * implements the assembler for the SUB command
+     */
+    public static class SUB extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("SUB command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("SUB command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isRegisterNumber(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int reg2 = getRegisterNumber(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg2 < 0) || (reg2 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                
+                return new byte[]{(byte)(0x08 | (reg1>>3)), (byte)(((reg1 & 0x07)<<5) | (reg2))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in SUB command");
+        }
+    }
+    
+    /**
+     * Class SBB
+     * implements the assembler for the SBB command
+     */
+    public static class SBB extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("SBB command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("SBB command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isRegisterNumber(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int reg2 = getRegisterNumber(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg2 < 0) || (reg2 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                
+                return new byte[]{(byte)(0x0C | (reg1>>3)), (byte)(((reg1 & 0x07)<<5) | (reg2))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in SBB command");
+        }
+    }
+    
+    /**
+     * Class ADI
+     * implements the assembler for the ADI command
+     */
+    public static class ADI extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("ADI command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("ADI command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isNumeric(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int value = getNumeric(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((value < 0) || (value > 15)) throw new SyntaxErrorException("Value must be within [0..15]");
+                
+                return new byte[]{(byte)(0x10 | (reg1>>3)), (byte)(((reg1 & 0x07)<<5) | (value << 1))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in ADI command");
+        }
+    }
+    
+    /**
+     * Class ADBI
+     * implements the assembler for the ADBI command
+     */
+    public static class ADBI extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("ADBI command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("ADBI command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isNumeric(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int value = getNumeric(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((value < 0) || (value > 15)) throw new SyntaxErrorException("Value must be within [0..15]");
+                
+                return new byte[]{(byte)(0x14 | (reg1>>3)), (byte)(((reg1 & 0x07)<<5) | (value << 1))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in ADBI command");
+        }
+    }
+    
+    /**
+     * Class SBI
+     * implements the assembler for the SBI command
+     */
+    public static class SBI extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("SBI command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("SBI command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isNumeric(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int value = getNumeric(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((value < 0) || (value > 15)) throw new SyntaxErrorException("Value must be within [0..15]");
+                
+                return new byte[]{(byte)(0x18 | (reg1>>3)), (byte)(((reg1 & 0x07)<<5) | (value << 1))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in SBI command");
+        }
+    }
+    
+    /**
+     * Class SBBI
+     * implements the assembler for the SBBI command
+     */
+    public static class SBBI extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("SBBI command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("SBBI command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isNumeric(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int value = getNumeric(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((value < 0) || (value > 15)) throw new SyntaxErrorException("Value must be within [0..15]");
+                
+                return new byte[]{(byte)(0x1C | (reg1>>3)), (byte)(((reg1 & 0x07)<<5) | (value << 1))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in SBBI command");
+        }
+    }
+    
+    /**
+     * Class ADM
+     * implements the assembler for the ADM command
+     */
+    public static class ADM extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("ADM command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("ADM command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isRegisterNumber(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int reg2 = getRegisterNumber(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg2 < 0) || (reg2 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                
+                return new byte[]{(byte)(0x20 | (reg1>>3)), (byte)(((reg1 & 0x07)<<5) | (reg2))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in ADM command");
+        }
+    }
+    
+    /**
+     * Class ADBM
+     * implements the assembler for the ADBM command
+     */
+    public static class ADBM extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("ADBM command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("ADBM command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isRegisterNumber(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int reg2 = getRegisterNumber(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg2 < 0) || (reg2 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                
+                return new byte[]{(byte)(0x24 | (reg1>>3)), (byte)(((reg1 & 0x07)<<5) | (reg2))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in ADBM command");
+        }
+    }
+    
+    /**
+     * Class SBM
+     * implements the assembler for the SBM command
+     */
+    public static class SBM extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("SBM command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("SBM command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isRegisterNumber(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int reg2 = getRegisterNumber(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg2 < 0) || (reg2 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                
+                return new byte[]{(byte)(0x28 | (reg1>>3)), (byte)(((reg1 & 0x07)<<5) | (reg2))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in SBM command");
+        }
+    }
+    
+    /**
+     * Class SBBM
+     * implements the assembler for the SBBM command
+     */
+    public static class SBBM extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("SBBM command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("SBBM command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isRegisterNumber(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int reg2 = getRegisterNumber(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg2 < 0) || (reg2 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                
+                return new byte[]{(byte)(0x2C | (reg1>>3)), (byte)(((reg1 & 0x07)<<5) | (reg2))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in SBBM command");
+        }
+    }
+    
+    /**
+     * Class CMP
+     * implements the assembler for the CMP command
+     */
+    public static class CMP extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("CMP command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("CMP command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isRegisterNumber(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int reg2 = getRegisterNumber(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg2 < 0) || (reg2 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                
+                return new byte[]{(byte)(0x30 | (reg1>>3)), (byte)(((reg1 & 0x07)<<5) | (reg2))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in CMP command");
+        }
+    }
+    
+    /**
+     * Class CPM
+     * implements the assembler for the CPM command
+     */
+    public static class CPM extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("CPM command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("CPM command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isRegisterNumber(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int reg2 = getRegisterNumber(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg2 < 0) || (reg2 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                
+                return new byte[]{(byte)(0x34 | (reg1>>3)), (byte)(((reg1 & 0x07)<<5) | (reg2))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in CPM command");
+        }
+    }
+    
+    /**
+     * Class CPI
+     * implements the assembler for the CPI command
+     */
+    public static class CPI extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("CPI command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("CPI command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isNumeric(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int value = getNumeric(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((value < 0) || (value > 15)) throw new SyntaxErrorException("Value must be within [0..15]");
+                
+                return new byte[]{(byte)(0x38 | (reg1>>3)), (byte)(((reg1 & 0x07)<<5) | (value << 1))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in CPI command");
+        }
+    }
+    
+    /**
+     * Class LCRB
+     * implements the assembler for the LCRB command
+     */
+    public static class LCRB extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("LCRB command requires 1 parameter");
+            String param1 = parameters.nextToken(" ,");
+            
+            if(isNumeric(param1)) {
+                int value = getNumeric(param1);
+                
+                if((value < 0) || (value > 3)) throw new SyntaxErrorException("Bank Number must be within [0..3]");
+                
+                return new byte[]{(byte)(0x3C), (byte)(value << 3)};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in LCRB command");
+        }
+    }
+    
+    /**
+     * Class LARB
+     * implements the assembler for the LARB command
+     */
+    public static class LARB extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("LARB command requires 1 parameter");
+            String param1 = parameters.nextToken(" ,");
+            
+            if(isNumeric(param1)) {
+                int value = getNumeric(param1);
+                
+                if((value < 0) || (value > 3)) throw new SyntaxErrorException("Bank Number must be within [0..3]");
+                
+                return new byte[]{(byte)(0x3E), (byte)(value << 3)};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in LARB command");
+        }
+    }
+    
+    /**
+     * Class ANDI
+     * implements the assembler for the ANDI command
+     */
+    public static class ANDI extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("ANDI command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("ANDI command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isNumeric(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int value = getNumeric(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((value < 0) || (value > 15)) throw new SyntaxErrorException("Value must be within [0..15]");
+                
+                return new byte[]{(byte)(0x40 | (reg1>>3)), (byte)(((reg1 & 0x07)<<5) | (value << 1))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in ANDI command");
+        }
+    }
+    
+    /**
+     * Class ORI
+     * implements the assembler for the ORI command
+     */
+    public static class ORI extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("ORI command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("ORI command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isNumeric(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int value = getNumeric(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((value < 0) || (value > 15)) throw new SyntaxErrorException("Value must be within [0..15]");
+                
+                return new byte[]{(byte)(0x44 | (reg1>>3)), (byte)(((reg1 & 0x07)<<5) | (value << 1))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in ORI command");
+        }
+    }
+    
+    /**
+     * Class XORI
+     * implements the assembler for the XORI command
+     */
+    public static class XORI extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("XORI command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("XORI command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isNumeric(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int value = getNumeric(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((value < 0) || (value > 15)) throw new SyntaxErrorException("Value must be within [0..15]");
+                
+                return new byte[]{(byte)(0x48 | (reg1>>3)), (byte)(((reg1 & 0x07)<<5) | (value << 1))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in XORI command");
+        }
+    }
+    
+    /**
+     * Class INC
+     * implements the assembler for the INC command
+     */
+    public static class INC extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("INC command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("INC command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isRegisterNumber(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int reg2 = getRegisterNumber(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg2 < 0) || (reg2 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg1 & 0x18) != (reg2 & 0x18)) throw new SyntaxErrorException("Registers must be from the same bank-tuple");
+                
+                return new byte[]{(byte)(0x4C | (reg1>>3)), (byte)(((reg1 & 0x07)<<5) | (reg2 & 0x07))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in INC command");
+        }
+    }
+    
+    /**
+     * Class INCB
+     * implements the assembler for the INCB command
+     */
+    public static class INCB extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("INCB command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("INCB command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isRegisterNumber(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int reg2 = getRegisterNumber(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg2 < 0) || (reg2 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg1 & 0x18) != (reg2 & 0x18)) throw new SyntaxErrorException("Registers must be from the same bank-tuple");
+                
+                return new byte[]{(byte)(0x4C | (reg1>>3)), (byte)(0x08 | ((reg1 & 0x07)<<5) | (reg2 & 0x07))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in INCB command");
+        }
+    }
+    
+    /**
+     * Class DEC
+     * implements the assembler for the DEC command
+     */
+    public static class DEC extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("DEC command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("DEC command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isRegisterNumber(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int reg2 = getRegisterNumber(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg2 < 0) || (reg2 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg1 & 0x18) != (reg2 & 0x18)) throw new SyntaxErrorException("Registers must be from the same bank-tuple");
+                
+                return new byte[]{(byte)(0x4C | (reg1>>3)), (byte)(0x10 | ((reg1 & 0x07)<<5) | (reg2 & 0x07))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in DEC command");
+        }
+    }
+    
+    /**
+     * Class DECB
+     * implements the assembler for the DECB command
+     */
+    public static class DECB extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("DECB command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("DECB command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isRegisterNumber(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int reg2 = getRegisterNumber(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg2 < 0) || (reg2 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg1 & 0x18) != (reg2 & 0x18)) throw new SyntaxErrorException("Registers must be from the same bank-tuple");
+                
+                return new byte[]{(byte)(0x4C | (reg1>>3)), (byte)(0x18 | ((reg1 & 0x07)<<5) | (reg2 & 0x07))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in DECB command");
+        }
+    }
+    
+    /**
+     * Class RSHM
+     * implements the assembler for the RSHM command
+     */
+    public static class RSHM extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("RSHM command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("RSHM command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isRegisterNumber(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int reg2 = getRegisterNumber(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg2 < 0) || (reg2 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg1 & 0x18) != (reg2 & 0x18)) throw new SyntaxErrorException("Registers must be from the same bank-tuple");
+                
+                return new byte[]{(byte)(0x50 | (reg1>>3)), (byte)(((reg1 & 0x07)<<5) | (reg2 & 0x07))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in RSHM command");
+        }
+    }
+    
+    /**
+     * Class LSHM
+     * implements the assembler for the LSHM command
+     */
+    public static class LSHM extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("LSHM command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("LSHM command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isRegisterNumber(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int reg2 = getRegisterNumber(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg2 < 0) || (reg2 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg1 & 0x18) != (reg2 & 0x18)) throw new SyntaxErrorException("Registers must be from the same bank-tuple");
+                
+                return new byte[]{(byte)(0x50 | (reg1>>3)), (byte)(0x08 | ((reg1 & 0x07)<<5) | (reg2 & 0x07))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in LSHM command");
+        }
+    }
+    
+    /**
+     * Class IN
+     * implements the assembler for the IN command
+     */
+    public static class IN extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("IN command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("IN command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isNumeric(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int value = getNumeric(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((value < 0) || (value > 15)) throw new SyntaxErrorException("Port Number must be within [0..15]");
+                
+                return new byte[]{(byte)(0x54 | (reg1>>3)), (byte)(((reg1 & 0x07)<<5) | (value))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in IN command");
+        }
+    }
+    
+    /**
+     * Class OUT
+     * implements the assembler for the OUT command
+     */
+    public static class OUT extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("OUT command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("OUT command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param2) && isNumeric(param1)) {
+                int value = getNumeric(param1);
+                int reg1 = getRegisterNumber(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((value < 0) || (value > 15)) throw new SyntaxErrorException("Port Number must be within [0..15]");
+                
+                return new byte[]{(byte)(0x58 | (reg1>>3)), (byte)(((reg1 & 0x07)<<5) | (value))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in OUT command");
+        }
+    }
+    
+    /**
+     * Class OUTI
+     * implements the assembler for the OUTI command
+     */
+    public static class OUTI extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("OUTI command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("OUTI command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isNumeric(param1) && isNumeric(param2)) {
+                int port = getNumeric(param1);
+                int value = getNumeric(param2);
+                
+                if((port < 0) || (port > 15)) throw new SyntaxErrorException("Port Number must be within [0..15]");
+                if((value < 0) || (value > 15)) throw new SyntaxErrorException("Value must be within [0..15]");
+                
+                return new byte[]{(byte)(0x5C | (value>>2)), (byte)(((value & 0x03)<<6) | (port))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in OUTI command");
+        }
+    }
+    
+    /**
+     * Class PSAM
+     * implements the assembler for the PSAM command
+     */
+    public static class PSAM extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("PSAM command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("PSAM command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isRegisterNumber(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int reg2 = getRegisterNumber(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg2 < 0) || (reg2 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg1 & 0x18) != (reg2 & 0x18)) throw new SyntaxErrorException("Registers must be from the same bank-tuple");
+                
+                return new byte[]{(byte)(0x60 | (reg1>>3)), (byte)(((reg1 & 0x07)<<5) | (reg2 & 0x07))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in PSAM command");
+        }
+    }
+    
+    /**
+     * Class PLAM
+     * implements the assembler for the PLAM command
+     */
+    public static class PLAM extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("PLAM command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("PLAM command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isRegisterNumber(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int reg2 = getRegisterNumber(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg2 < 0) || (reg2 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg1 & 0x18) != (reg2 & 0x18)) throw new SyntaxErrorException("Registers must be from the same bank-tuple");
+                
+                return new byte[]{(byte)(0x60 | (reg1>>3)), (byte)(0x10 | ((reg1 & 0x07)<<5) | (reg2 & 0x07))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in PLAM command");
+        }
+    }
+    
+    /**
+     * Class LDSM
+     * implements the assembler for the LDSM command
+     */
+    public static class LDSM extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("LDSM command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("LDSM command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isRegisterNumber(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int reg2 = getRegisterNumber(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg2 < 0) || (reg2 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg1 & 0x18) != (reg2 & 0x18)) throw new SyntaxErrorException("Registers must be from the same bank-tuple");
+                
+                return new byte[]{(byte)(0x64 | (reg1>>3)), (byte)(0x08 | ((reg1 & 0x07)<<5) | (reg2 & 0x07))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in LDSM command");
+        }
+    }
+    
+    /**
+     * Class STSM
+     * implements the assembler for the STSM command
+     */
+    public static class STSM extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("STSM command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("STSM command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isRegisterNumber(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int reg2 = getRegisterNumber(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg2 < 0) || (reg2 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg1 & 0x18) != (reg2 & 0x18)) throw new SyntaxErrorException("Registers must be from the same bank-tuple");
+                
+                return new byte[]{(byte)(0x64 | (reg1>>3)), (byte)(((reg1 & 0x07)<<5) | (reg2 & 0x07))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in STSM command");
+        }
+    }
+    
+    /**
+     * Class STLM
+     * implements the assembler for the STLM command
+     */
+    public static class STLM extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("STLM command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("STLM command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isRegisterNumber(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int reg2 = getRegisterNumber(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg2 < 0) || (reg2 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg1 & 0x18) != (reg2 & 0x18)) throw new SyntaxErrorException("Registers must be from the same bank-tuple");
+                
+                return new byte[]{(byte)(0x68 | (reg1>>3)), (byte)(((reg1 & 0x07)<<5) | (reg2 & 0x07))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in STLM command");
+        }
+    }
+    
+    /**
+     * Class STL
+     * implements the assembler for the STL command
+     */
+    public static class STL extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("STL command requires 1 parameter1");
+            String param1 = parameters.nextToken(" ,");
+            
+            if(isRegisterNumber(param1)) {
+                int reg1 = getRegisterNumber(param1);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                
+                return new byte[]{(byte)(0x6C | (reg1>>3)), (byte)((reg1 & 0x07)<<5)};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in STL command");
+        }
+    }
+    
+    /**
+     * Class PSAI
+     * implements the assembler for the PSAI command
+     */
+    public static class PSAI extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("PSAI command requires 1 parameter");
+            String param1 = parameters.nextToken(" ,");
+            
+            if(isNumeric(param1)) {
+                int value = getNumeric(param1);
+                
+                if((value < 0) || (value > 2047)) throw new SyntaxErrorException("Address must be within [0..2047]");
+                
+                return new byte[]{(byte)(0x70 | (value>>8)), (byte)(value & 0xFF)};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in PSAI command");
+        }
+    }
+    
+    /**
+     * Class PLAI
+     * implements the assembler for the PLAI command
+     */
+    public static class PLAI extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("PLAI command requires 1 parameter");
+            String param1 = parameters.nextToken(" ,");
+            
+            if(isNumeric(param1)) {
+                int value = getNumeric(param1);
+                
+                if((value < 0) || (value > 255)) throw new SyntaxErrorException("Value must be within [0..255]");
+                
+                return new byte[]{(byte)(0x78 | (value>>6)), (byte)(((value & 0x38)<<5) | (value & 0x07))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in PLAI command");
+        }
+    }
+    
+    /**
+     * Class STLI
+     * implements the assembler for the STLI command
+     */
+    public static class STLI extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("STLI command requires 1 parameter");
+            String param1 = parameters.nextToken(" ,");
+            
+            if(isNumeric(param1)) {
+                int value = getNumeric(param1);
+                
+                if((value < 0) || (value > 255)) throw new SyntaxErrorException("Value must be within [0..255]");
+                
+                return new byte[]{(byte)(0x78 | (value>>6)), (byte)(0x10 | ((value & 0x38)<<5) | (value & 0x07))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in STLI command");
+        }
+    }
+    
+    /**
+     * Class MOV
+     * implements the assembler for the MOV command
+     */
+    public static class MOV extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("MOV command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("MOV command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isRegisterNumber(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int reg2 = getRegisterNumber(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg2 < 0) || (reg2 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                
+                return new byte[]{(byte)(0x80 | (reg1>>3)), (byte)(((reg1 & 0x07)<<5) | (reg2))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in MOV command");
+        }
+    }
+    
+    /**
+     * Class MOVM
+     * implements the assembler for the MOVM command
+     */
+    public static class MOVM extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("MOVM command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("MOVM command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isRegisterNumber(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int reg2 = getRegisterNumber(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg2 < 0) || (reg2 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                
+                return new byte[]{(byte)(0x84 | (reg1>>3)), (byte)(((reg1 & 0x07)<<5) | (reg2))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in MOVM command");
+        }
+    }
+    
+    /**
+     * Class LDI
+     * implements the assembler for the LDI command
+     */
+    public static class LDI extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("LDI command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("LDI command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isNumeric(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int value = getNumeric(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((value < 0) || (value > 15)) throw new SyntaxErrorException("Value must be within [0..15]");
+                
+                return new byte[]{(byte)(0x88 | (reg1>>3)), (byte)(((reg1 & 0x07)<<5) | (value<<1))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in LDI command");
+        }
+    }
+    
+    /**
+     * Class CLRM
+     * implements the assembler for the CLRM command
+     */
+    public static class CLRM extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("CLRM command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("CLRM command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isRegisterNumber(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int reg2 = getRegisterNumber(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg2 < 0) || (reg2 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg1 & 0x18) != (reg2 & 0x18)) throw new SyntaxErrorException("Registers must be from the same bank-tuple");
+                
+                return new byte[]{(byte)(0x8C | (reg1>>3)), (byte)(((reg1 & 0x07)<<5) | (reg2 & 0x07))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in CLRM command");
+        }
+    }
+    
+    /**
+     * Class MVAC
+     * implements the assembler for the MVAC command
+     */
+    public static class MVAC extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("MVAC command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("MVAC command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isRegisterNumber(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int reg2 = getRegisterNumber(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg2 < 0) || (reg2 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                
+                return new byte[]{(byte)(0x90 | (reg1>>3)), (byte)(((reg1 & 0x07)<<5) | (reg2))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in MVAC command");
+        }
+    }
+    
+    /**
+     * Class MVACM
+     * implements the assembler for the MVACM command
+     */
+    public static class MVACM extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("MVACM command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("MVACM command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isRegisterNumber(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int reg2 = getRegisterNumber(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg2 < 0) || (reg2 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                
+                return new byte[]{(byte)(0x94 | (reg1>>3)), (byte)(((reg1 & 0x07)<<5) | (reg2))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in MVACM command");
+        }
+    }
+    
+    /**
+     * Class MVCA
+     * implements the assembler for the MVCA command
+     */
+    public static class MVCA extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("MVCA command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("MVCA command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isRegisterNumber(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int reg2 = getRegisterNumber(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg2 < 0) || (reg2 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                
+                return new byte[]{(byte)(0x98 | (reg1>>3)), (byte)(((reg1 & 0x07)<<5) | (reg2))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in MVCA command");
+        }
+    }
+    
+    /**
+     * Class MVCAM
+     * implements the assembler for the MVCAM command
+     */
+    public static class MVCAM extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("MVCAM command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("MVCAM command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isRegisterNumber(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int reg2 = getRegisterNumber(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((reg2 < 0) || (reg2 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                
+                return new byte[]{(byte)(0x9C | (reg1>>3)), (byte)(((reg1 & 0x07)<<5) | (reg2))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in MVCAM command");
+        }
+    }
+    
+    /**
+     * Class CALL
+     * implements the assembler for the CALL command
+     */
+    public static class CALL extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("CALL command requires 1 parameter");
+            String param1 = parameters.nextToken(" ,");
+            
+            if(isNumeric(param1)) {
+                int value = getNumeric(param1);
+                
+                if((value < 0) || (value > 6143)) throw new SyntaxErrorException("Value must be within [0..6143]");
+                value >>= 1;
+                
+                return new byte[]{(byte)(0xA0 | (value>>8)), (byte)(value & 0xFF)};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in CALL command");
+        }
+    }
+    
+    /**
+     * Class RET
+     * implements the assembler for the RET command
+     */
+    public static class RET extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            return new byte[]{(byte)0xB0, (byte)0x00};
+        }
+    }
+    
+    /**
+     * Class CPFJR
+     * implements the assembler for the CPFJI command
+     */
+    public static class CPFJR extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("CPFJR command requires 2 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("CPFJR command requires 2 parameters");
+            String param2 = parameters.nextToken();
+            
+            if(isRegisterNumber(param1) && isNumeric(param2)) {
+                int reg1 = getRegisterNumber(param1);
+                int value = getNumeric(param2);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((value < 0) || (value > 31)) throw new SyntaxErrorException("Offset must be within [0..31]");
+                
+                return new byte[]{(byte)(0xB4 | (reg1>>3)), (byte)(((reg1 & 0x07)<<5) | (value))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in CPFJR command");
+        }
+    }
+    
+    /**
+     * Class IJMR
+     * implements the assembler for the IJMR command
+     */
+    public static class IJMR extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("IJMR command requires 1 parameter");
+            String param1 = parameters.nextToken(" ,");
+            
+            if(isRegisterNumber(param1)) {
+                int reg1 = getRegisterNumber(param1);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                
+                return new byte[]{(byte)(0xB8 | (reg1>>3)), (byte)((reg1 & 0x07)<<5)};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in IJMR command");
+        }
+    }
+    
+    /**
+     * Class NOP
+     * implements the assembler for the NOP command
+     */
+    public static class NOP extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            return new byte[]{(byte)0xBC, (byte)0x00};
+        }
+    }
+    
+    /**
+     * Class JMP
+     * implements the assembler for the JMP command
+     */
+    public static class JMP extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("JMP command requires 1 parameter");
+            String param1 = parameters.nextToken(" ,");
+            
+            if(isNumeric(param1)) {
+                int value = getNumeric(param1);
+                
+                if((value < 0) || (value > 6143)) throw new SyntaxErrorException("Value must be within [0..6143]");
+                value >>= 1;
+                
+                return new byte[]{(byte)(0xC0 | (value>>8)), (byte)(value & 0xFF)};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in JMP command");
+        }
+    }
+    
+    /**
+     * Class JZ
+     * implements the assembler for the JZ command
+     */
+    public static class JZ extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("JZ command requires 1 parameter");
+            String param1 = parameters.nextToken(" ,");
+            
+            if(isNumeric(param1)) {
+                int value = getNumeric(param1);
+                
+                if((value < 0x1800) || (value > 6143)) throw new SyntaxErrorException("Value must be within [4096..6143]");
+                value >>= 1;
+                value -= 0xC00;
+                
+                return new byte[]{(byte)(0xD0 | (value>>8)), (byte)(value & 0xFF)};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in JZ command");
+        }
+    }
+    
+    /**
+     * Class JNZ
+     * implements the assembler for the JNZ command
+     */
+    public static class JNZ extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("JNZ command requires 1 parameter");
+            String param1 = parameters.nextToken(" ,");
+            
+            if(isNumeric(param1)) {
+                int value = getNumeric(param1);
+                
+                if((value < 0x1800) || (value > 6143)) throw new SyntaxErrorException("Value must be within [4096..6143]");
+                value >>= 1;
+                value -= 0xC00;
+                
+                return new byte[]{(byte)(0xD4 | (value>>8)), (byte)(value & 0xFF)};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in JNZ command");
+        }
+    }
+    
+    /**
+     * Class JC
+     * implements the assembler for the JC command
+     */
+    public static class JC extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("JC command requires 1 parameter");
+            String param1 = parameters.nextToken(" ,");
+            
+            if(isNumeric(param1)) {
+                int value = getNumeric(param1);
+                
+                if((value < 0x1800) || (value > 6143)) throw new SyntaxErrorException("Value must be within [4096..6143]");
+                value >>= 1;
+                value -= 0xC00;
+                
+                return new byte[]{(byte)(0xD8 | (value>>8)), (byte)(value & 0xFF)};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in JC command");
+        }
+    }
+    
+    /**
+     * Class JNC
+     * implements the assembler for the JNC command
+     */
+    public static class JNC extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("JNC command requires 1 parameter");
+            String param1 = parameters.nextToken(" ,");
+            
+            if(isNumeric(param1)) {
+                int value = getNumeric(param1);
+                
+                if((value < 0x1800) || (value > 6143)) throw new SyntaxErrorException("Value must be within [4096..6143]");
+                value >>= 1;
+                value -= 0xC00;
+                
+                return new byte[]{(byte)(0xDC | (value>>8)), (byte)(value & 0xFF)};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in JNC command");
+        }
+    }
+    
+    /**
+     * Class BTJR
+     * implements the assembler for the BTJR command
+     */
+    public static class BTJR extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("BTJR command requires 3 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("BTJR command requires 3 parameters");
+            String param2 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("BTJR command requires 3 parameters");
+            String param3 = parameters.nextToken(" ,");
+            
+            if(isRegisterNumber(param1) && isNumeric(param2) && isNumeric(param3)) {
+                int reg1 = getRegisterNumber(param1);
+                int value = getNumeric(param2);
+                int offset = getNumeric(param3);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((value < 0) || (value > 3)) throw new SyntaxErrorException("Bit number must be within [0..3]");
+                if((offset < 0) || (offset > 31)) throw new SyntaxErrorException("Offset must be within [0..31]");
+                
+                return new byte[]{(byte)(0xE0 | (value<<4) | (reg1>>3)), (byte)(((reg1 & 0x07)<<5) | (offset))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in BTJR command");
+        }
+    }
+    
+    /**
+     * Class CPJR
+     * implements the assembler for the CPJR command
+     */
+    public static class CPJR extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("CPJR command requires 3 parameters");
+            String param1 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("CPJR command requires 3 parameters");
+            String param2 = parameters.nextToken(" ,");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("CPJR command requires 3 parameters");
+            String param3 = parameters.nextToken(" ,");
+            
+            if(isRegisterNumber(param1) && isNumeric(param2) && isNumeric(param3)) {
+                int reg1 = getRegisterNumber(param1);
+                int value = getNumeric(param2);
+                int offset = getNumeric(param3);
+                
+                if((reg1 < 0) || (reg1 > 31)) throw new SyntaxErrorException("Register Number must be within [0..31]");
+                if((value < 0) || (value > 3)) throw new SyntaxErrorException("Bit number must be within [0..3]");
+                if((offset < 0) || (offset > 31)) throw new SyntaxErrorException("Offset must be within [0..31]");
+                
+                return new byte[]{(byte)(0xF0 | (value<<4) | (reg1>>3)), (byte)(((reg1 & 0x07)<<5) | (offset))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in CPJR command");
+        }
+    }
     
     public SeikoUC2000Debugger() {
         super();
@@ -317,9 +1794,39 @@ public class SeikoUC2000Debugger extends SeikoUC2000 implements Debugger {
         }
     }
 
+    /**
+     * Returns the bytecode for a given assembler mnemonic
+     * 
+     * @param mnemonic (String) the mnemonic
+     * @return the byte code (byte[])
+     * @throws SyntaxErrorException if there was a syntax error
+     */
     @Override
     public byte[] translate(String mnemonic) throws SyntaxErrorException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        mnemonic = mnemonic.toUpperCase();
+        StringTokenizer st = new StringTokenizer(mnemonic);
+        
+        String mnem1 = st.nextToken();
+        
+        try {
+            String className = "org.ansic.micro.SeikoUC2000Debugger$" + mnem1;
+            Class theClass = Class.forName(className);
+            Object theObj = theClass.newInstance();
+            
+            Z80Debugger.Mnemonic mnem = (Z80Debugger.Mnemonic)theObj;
+            
+            
+            byte[] opCodes = mnem.getOpCodes(st);
+            
+            return opCodes;
+        }
+        catch (SyntaxErrorException sex) {
+            throw sex;
+        }
+        catch (ClassNotFoundException | IllegalAccessException | InstantiationException ex) {
+            Logger.getLogger(DebuggerGUI.class.getName()).log(Level.SEVERE, null, ex);
+            throw new SyntaxErrorException("Syntax error in <" + mnemonic + ">");
+        }
     }
 
     /**
