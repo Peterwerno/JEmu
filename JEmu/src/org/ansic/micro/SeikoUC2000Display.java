@@ -603,7 +603,8 @@ public class SeikoUC2000Display extends JFrame implements IO, ActionListener {
                         break;
                         
                     default:
-                        throw new AssertionError();
+                        System.out.println("Illegal LCD Command " + this.command + " = $" + Integer.toHexString(this.command));
+                        break;
                 }
             }
             
