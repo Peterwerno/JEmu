@@ -21,6 +21,8 @@ package org.ansic.micro;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * This class implements a debugger for the Z80 processor
@@ -28,105 +30,7 @@ import java.util.StringTokenizer;
  * @author peter
  */
 public class Z80Debugger extends Z80 implements Debugger {
-    public abstract static class Mnemonic {
-        /**
-         * Checks if a string "param" is within a list "optList" (comma 
-         * separated list of strings)
-         * 
-         * @param param
-         * @param optList
-         * @return 
-         */
-        protected boolean isIn(String param, String optList) {
-            StringTokenizer st = new StringTokenizer(optList, ",");
-            while(st.hasMoreTokens()) {
-                if(param.equals(st.nextToken()))
-                    return true;
-            }
-            return false;
-        }
-        
-        protected boolean isNumeric(String param) {
-            int value = 0;
-            
-            // $ indicates hex value
-            if(param.startsWith("$")) {
-                try {
-                    value = Integer.parseInt(param.substring(1), 16);
-                    return true;
-                }
-                catch (NumberFormatException ex) {
-                    
-                }
-            }
-            // b indicates binary value
-            else if(param.startsWith("b")) {
-                try {
-                    value = Integer.parseInt(param.substring(1), 2);
-                    return true;
-                }
-                catch (NumberFormatException ex) {
-                    
-                }
-            }
-            // otherwise, decimal
-            else {
-                try {
-                    value = Integer.parseInt(param);
-                    return true;
-                }
-                catch (NumberFormatException ex) {
-                    
-                }
-            }
-            
-            return false;
-        }
-        
-        /**
-         * Returns the numeric value of a parameter
-         * 
-         * @param param
-         * @return
-         * @throws SyntaxErrorException 
-         */
-        protected int getNumeric(String param) throws SyntaxErrorException {
-            int value = 0;
-            
-            // $ indicates hex value
-            if(param.startsWith("$")) {
-                try {
-                    value = Integer.parseInt(param.substring(1), 16);
-                    return value;
-                }
-                catch (NumberFormatException ex) {
-                    
-                }
-            }
-            // b indicates binary value
-            else if(param.startsWith("b")) {
-                try {
-                    value = Integer.parseInt(param.substring(1), 2);
-                    return value;
-                }
-                catch (NumberFormatException ex) {
-                    
-                }
-            }
-            // otherwise, decimal
-            else {
-                try {
-                    value = Integer.parseInt(param);
-                    return value;
-                }
-                catch (NumberFormatException ex) {
-                    
-                }
-            }
-            
-            throw new SyntaxErrorException(param + " is not numeric value");
-        }
-        
+    public abstract static class Z80Mnemonic extends Debugger.Mnemonic {
         public static byte getRegisterNum8(String registerName) throws SyntaxErrorException {
             switch (registerName) {
                 case "B":
@@ -180,15 +84,13 @@ public class Z80Debugger extends Z80 implements Debugger {
                     throw new SyntaxErrorException("Register " + registerName + " not available");
             }
         }
-        
-        public abstract byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException;
     }
     
     /**
      * class LD 
      * implements the "LD" operation
      */
-    public static class LD extends Mnemonic {
+    public static class LD extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("LD command requires 2 parameters");
@@ -492,7 +394,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class PUSH
      * implements the assembler for PUSH commands
      */
-    public static class PUSH extends Mnemonic {
+    public static class PUSH extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("PUSH command requires 1 parameter");
@@ -522,7 +424,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class POP
      * implements the assembler for PUSH commands
      */
-    public static class POP extends Mnemonic {
+    public static class POP extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("POP command requires 1 parameter");
@@ -552,7 +454,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * class EX
      * implements the assembler for EX commands
      */
-    public static class EX extends Mnemonic {
+    public static class EX extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("EX command requires 2 parameters");
@@ -588,7 +490,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * class EXX
      * implements the assembler for EXX command
      */
-    public static class EXX extends Mnemonic {
+    public static class EXX extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             return new byte[]{(byte)0xD9};
@@ -599,7 +501,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * class LDI
      * implements the assembler for LDI commands
      */
-    public static class LDI extends Mnemonic {
+    public static class LDI extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             return new byte[]{(byte)0xED, (byte)0xA0};
@@ -610,7 +512,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * class LDIR
      * implements the assembler for LDIR commands
      */
-    public static class LDIR extends Mnemonic {
+    public static class LDIR extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             return new byte[]{(byte)0xED, (byte)0xB0};
@@ -621,7 +523,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * class LDD
      * implements the assembler for LDD commands
      */
-    public static class LDD extends Mnemonic {
+    public static class LDD extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             return new byte[]{(byte)0xED, (byte)0xA8};
@@ -632,7 +534,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * class LDDR
      * implements the assembler for LDDR commands
      */
-    public static class LDDR extends Mnemonic {
+    public static class LDDR extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             return new byte[]{(byte)0xED, (byte)0xB8};
@@ -643,7 +545,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * class CPI
      * implements the assembler for CPI commands
      */
-    public static class CPI extends Mnemonic {
+    public static class CPI extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             return new byte[]{(byte)0xED, (byte)0xA1};
@@ -654,7 +556,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * class CPIR
      * implements the assembler for CPIR commands
      */
-    public static class CPIR extends Mnemonic {
+    public static class CPIR extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             return new byte[]{(byte)0xED, (byte)0xB1};
@@ -665,7 +567,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * class CPD
      * implements the assembler for CPD commands
      */
-    public static class CPD extends Mnemonic {
+    public static class CPD extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             return new byte[]{(byte)0xED, (byte)0xA9};
@@ -676,7 +578,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * class CPDR
      * implements the assembler for CPDR commands
      */
-    public static class CPDR extends Mnemonic {
+    public static class CPDR extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             return new byte[]{(byte)0xED, (byte)0xB9};
@@ -687,12 +589,12 @@ public class Z80Debugger extends Z80 implements Debugger {
      * class ADD
      * implements the assembler for ADD commands
      */
-    public static class ADD extends Mnemonic {
+    public static class ADD extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
-            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("ADC command requires 2 parameters");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("ADD command requires 2 parameters");
             String param1 = parameters.nextToken(" ,");
-            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("ADC command requires 2 parameters");
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("ADD command requires 2 parameters");
             String param2 = parameters.nextToken();
             
             // ADD A, r
@@ -773,7 +675,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class ADC
      * implements the assembler for ADC commands
      */
-    public static class ADC extends Mnemonic {
+    public static class ADC extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("ADC command requires 2 parameters");
@@ -877,7 +779,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * class SUB
      * implements the assembler for SUB commands
      */
-    public static class SUB extends Mnemonic {
+    public static class SUB extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("SUB command requires 2 parameters");
@@ -942,7 +844,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * class SBC
      * implements the assembler for SBC commands
      */
-    public static class SBC extends Mnemonic {
+    public static class SBC extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("SBC command requires 2 parameters");
@@ -1012,7 +914,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * class AND
      * implements the assembler for AND commands
      */
-    public static class AND extends Mnemonic {
+    public static class AND extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("AND command requires 2 parameters");
@@ -1077,7 +979,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * class OR
      * implements the assembler for OR commands
      */
-    public static class OR extends Mnemonic {
+    public static class OR extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("OR command requires 2 parameters");
@@ -1142,7 +1044,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * class XOR
      * implements the assembler for XOR commands
      */
-    public static class XOR extends Mnemonic {
+    public static class XOR extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("XOR command requires 2 parameters");
@@ -1207,7 +1109,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * class CP
      * implements the assembler for CP commands
      */
-    public static class CP extends Mnemonic {
+    public static class CP extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("CP command requires 2 parameters");
@@ -1272,7 +1174,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * class INC
      * impements the assembler of the INC commands
      */
-    public static class INC extends Mnemonic {
+    public static class INC extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("INC command requires 1 parameter");
@@ -1339,7 +1241,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * class DEC
      * impements the assembler of the DEC commands
      */
-    public static class DEC extends Mnemonic {
+    public static class DEC extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("DEC command requires 1 parameter");
@@ -1406,7 +1308,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class DAA
      * implement the assembler for the DAA command
      */
-    public static class DAA extends Mnemonic {
+    public static class DAA extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             return new byte[]{(byte)0x27};
@@ -1417,7 +1319,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class CPL
      * implement the assembler for the CPL command
      */
-    public static class CPL extends Mnemonic {
+    public static class CPL extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             return new byte[]{(byte)0x2F};
@@ -1428,7 +1330,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class NEG
      * implements the assembler for the NEG commands
      */
-    public static class NEG extends Mnemonic {
+    public static class NEG extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("NEG command requires 1 parameter");
@@ -1446,7 +1348,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class CCF
      * implement the assembler for the CCF command
      */
-    public static class CCF extends Mnemonic {
+    public static class CCF extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             return new byte[]{(byte)0x3F};
@@ -1457,7 +1359,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class SCF
      * implement the assembler for the SCF command
      */
-    public static class SCF extends Mnemonic {
+    public static class SCF extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             return new byte[]{(byte)0x37};
@@ -1468,7 +1370,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class NOP
      * implement the assembler for the NOP command
      */
-    public static class NOP extends Mnemonic {
+    public static class NOP extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             return new byte[]{(byte)0x00};
@@ -1479,7 +1381,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class HALT
      * implement the assembler for the HALT command
      */
-    public static class HALT extends Mnemonic {
+    public static class HALT extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             return new byte[]{(byte)0x76};
@@ -1490,7 +1392,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class DI
      * implement the assembler for the DI command
      */
-    public static class DI extends Mnemonic {
+    public static class DI extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             return new byte[]{(byte)0xF3};
@@ -1501,7 +1403,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class EI
      * implement the assembler for the EI command
      */
-    public static class EI extends Mnemonic {
+    public static class EI extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             return new byte[]{(byte)0xFB};
@@ -1512,7 +1414,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class EI
      * implement the assembler for the IM commands
      */
-    public static class IM extends Mnemonic {
+    public static class IM extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("IM command requires 1 parameter");
@@ -1538,7 +1440,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class RLCA
      * implements the assembler for the RLCA command
      */
-    public static class RLCA extends Mnemonic {
+    public static class RLCA extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             return new byte[]{(byte)0x07};
@@ -1549,7 +1451,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class RLA
      * implements the assembler for the RLA command
      */
-    public static class RLA extends Mnemonic {
+    public static class RLA extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             return new byte[]{(byte)0x17};
@@ -1560,7 +1462,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class RRCA
      * implements the assembler for the RRCA command
      */
-    public static class RRCA extends Mnemonic {
+    public static class RRCA extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             return new byte[]{(byte)0x0F};
@@ -1571,7 +1473,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class RRA
      * implements the assembler for the RRA command
      */
-    public static class RRA extends Mnemonic {
+    public static class RRA extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             return new byte[]{(byte)0x1F};
@@ -1582,7 +1484,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class RLC
      * implements the assembler for the RLC command
      */
-    public static class RLC extends Mnemonic {
+    public static class RLC extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("RLC command requires 1 parameter");
@@ -1590,7 +1492,7 @@ public class Z80Debugger extends Z80 implements Debugger {
             
             // RLC r
             if(isIn(param1, "A,B,C,D,E,H,L"))
-                return new byte[]{(byte)0xCB, (byte)(0x00 | (getRegisterNum8(param1)))};
+                return new byte[]{(byte)0xCB, (byte)(getRegisterNum8(param1))};
             
             // RLC (HL)
             if(param1.equals("(HL)"))
@@ -1636,7 +1538,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class RL
      * implements the assembler for the RL command
      */
-    public static class RL extends Mnemonic {
+    public static class RL extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("RL command requires 1 parameter");
@@ -1690,7 +1592,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class RRC
      * implements the assembler for the RRC command
      */
-    public static class RRC extends Mnemonic {
+    public static class RRC extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("RRC command requires 1 parameter");
@@ -1744,7 +1646,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class RR
      * implements the assembler for the RR command
      */
-    public static class RR extends Mnemonic {
+    public static class RR extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("RR command requires 1 parameter");
@@ -1798,7 +1700,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class SLA
      * implements the assembler for the SLA command
      */
-    public static class SLA extends Mnemonic {
+    public static class SLA extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("SLA command requires 1 parameter");
@@ -1852,7 +1754,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class SRA
      * implements the assembler for the SRA command
      */
-    public static class SRA extends Mnemonic {
+    public static class SRA extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("SRA command requires 1 parameter");
@@ -1906,7 +1808,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class SRL
      * implements the assembler for the SRL command
      */
-    public static class SRL extends Mnemonic {
+    public static class SRL extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("SRL command requires 1 parameter");
@@ -1960,7 +1862,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class RLD
      * implements the assembler for the RLD command
      */
-    public static class RLD extends Mnemonic {
+    public static class RLD extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             return new byte[]{(byte)0xED, (byte)0x6F};
@@ -1971,7 +1873,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class RRD
      * implements the assembler for the RRD command
      */
-    public static class RRD extends Mnemonic {
+    public static class RRD extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             return new byte[]{(byte)0xED, (byte)0x67};
@@ -1982,7 +1884,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class BIT
      * implements the assembler for the BIT command
      */
-    public static class BIT extends Mnemonic {
+    public static class BIT extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("BIT command requires 2 parameters");
@@ -2056,7 +1958,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class SET
      * implements the assembler for the SET command
      */
-    public static class SET extends Mnemonic {
+    public static class SET extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("SET command requires 2 parameters");
@@ -2130,7 +2032,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class RES
      * implements the assembler for the RES command
      */
-    public static class RES extends Mnemonic {
+    public static class RES extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("RES command requires 2 parameters");
@@ -2204,7 +2106,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class JP
      * implements the assembler for the JP command
      */
-    public static class JP extends Mnemonic {
+    public static class JP extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("JP command requires 1 parameter");
@@ -2286,7 +2188,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class JPNZ
      * implements the assembler for conditional jump JPNZ / JP NZ
      */
-    public static class JPNZ extends Mnemonic {
+    public static class JPNZ extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("JPNZ command requires 1 parameter");
@@ -2308,7 +2210,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class JPZ
      * implements the assembler for conditional jump JPZ / JP Z
      */
-    public static class JPZ extends Mnemonic {
+    public static class JPZ extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("JPZ command requires 1 parameter");
@@ -2330,7 +2232,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class JPNC
      * implements the assembler for conditional jump JPNC / JP NC
      */
-    public static class JPNC extends Mnemonic {
+    public static class JPNC extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("JPNC command requires 1 parameter");
@@ -2352,7 +2254,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class JPC
      * implements the assembler for conditional jump JPC / JP C
      */
-    public static class JPC extends Mnemonic {
+    public static class JPC extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("JPC command requires 1 parameter");
@@ -2374,7 +2276,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class JPPO
      * implements the assembler for conditional jump JPPO / JP PO
      */
-    public static class JPPO extends Mnemonic {
+    public static class JPPO extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("JPPO command requires 1 parameter");
@@ -2396,7 +2298,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class JPPE
      * implements the assembler for conditional jump JPPE / JP PE
      */
-    public static class JPPE extends Mnemonic {
+    public static class JPPE extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("JPPE command requires 1 parameter");
@@ -2418,7 +2320,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class JPNS
      * implements the assembler for conditional jump JPNS / JP NS
      */
-    public static class JPNS extends Mnemonic {
+    public static class JPNS extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("JPNS command requires 1 parameter");
@@ -2440,7 +2342,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class JPS
      * implements the assembler for conditional jump JPS / JP S
      */
-    public static class JPS extends Mnemonic {
+    public static class JPS extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("JPS command requires 1 parameter");
@@ -2462,7 +2364,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class JPP
      * implements the assembler for conditional jump JPP / JP P
      */
-    public static class JPP extends Mnemonic {
+    public static class JPP extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("JPP command requires 1 parameter");
@@ -2484,7 +2386,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class JPM
      * implements the assembler for conditional jump JPM / JP M
      */
-    public static class JPM extends Mnemonic {
+    public static class JPM extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("JPM command requires 1 parameter");
@@ -2506,7 +2408,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class JR
      * implements the assembler for the JR command
      */
-    public static class JR extends Mnemonic {
+    public static class JR extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("JR command requires 1 parameter");
@@ -2559,7 +2461,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class JRC
      * implements the assembler for the JRC command
      */
-    public static class JRC extends Mnemonic {
+    public static class JRC extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("JRC command requires 1 parameter");
@@ -2581,7 +2483,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class JRNC
      * implements the assembler for the JRNC command
      */
-    public static class JRNC extends Mnemonic {
+    public static class JRNC extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("JRNC command requires 1 parameter");
@@ -2603,7 +2505,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class JRZ
      * implements the assembler for the JRZ command
      */
-    public static class JRZ extends Mnemonic {
+    public static class JRZ extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("JRZ command requires 1 parameter");
@@ -2625,7 +2527,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class JRNZ
      * implements the assembler for the JRNZ command
      */
-    public static class JRNZ extends Mnemonic {
+    public static class JRNZ extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("JRNZ command requires 1 parameter");
@@ -2647,7 +2549,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class DJNZ
      * implements the assembler for the DJNZ command
      */
-    public static class DJNZ extends Mnemonic {
+    public static class DJNZ extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("DJNZ command requires 1 parameter");
@@ -2669,7 +2571,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class CALL
      * implements the assembler for the CALL command
      */
-    public static class CALL extends Mnemonic {
+    public static class CALL extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("CALL command requires 1 parameter");
@@ -2739,7 +2641,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class CALLNZ
      * implements the assembler for conditional jump CALLNZ / CALL NZ
      */
-    public static class CALLNZ extends Mnemonic {
+    public static class CALLNZ extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("CALLNZ command requires 1 parameter");
@@ -2761,7 +2663,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class CALLZ
      * implements the assembler for conditional jump CALLZ / CALL Z
      */
-    public static class CALLZ extends Mnemonic {
+    public static class CALLZ extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("CALLZ command requires 1 parameter");
@@ -2783,7 +2685,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class CALLNC
      * implements the assembler for conditional jump CALLNC / CALL NC
      */
-    public static class CALLNC extends Mnemonic {
+    public static class CALLNC extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("CALLNC command requires 1 parameter");
@@ -2805,7 +2707,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class CALLC
      * implements the assembler for conditional jump CALLC / CALL C
      */
-    public static class CALLC extends Mnemonic {
+    public static class CALLC extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("CALLC command requires 1 parameter");
@@ -2827,7 +2729,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class CALLPO
      * implements the assembler for conditional jump CALLPO / CALL PO
      */
-    public static class CALLPO extends Mnemonic {
+    public static class CALLPO extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("CALLPO command requires 1 parameter");
@@ -2849,7 +2751,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class CALLPE
      * implements the assembler for conditional jump CALLPE / CAL PE
      */
-    public static class CALLPE extends Mnemonic {
+    public static class CALLPE extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("CALLPE command requires 1 parameter");
@@ -2871,7 +2773,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class CALLNS
      * implements the assembler for conditional jump CALLNS / CALL NS
      */
-    public static class CALLNS extends Mnemonic {
+    public static class CALLNS extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("CALLNS command requires 1 parameter");
@@ -2893,7 +2795,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class CALLS
      * implements the assembler for conditional jump CALLS / CALL S
      */
-    public static class CALLS extends Mnemonic {
+    public static class CALLS extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("CALLS command requires 1 parameter");
@@ -2915,7 +2817,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class CALLP
      * implements the assembler for conditional jump CALLP / CALL P
      */
-    public static class CALLP extends Mnemonic {
+    public static class CALLP extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("CALLP command requires 1 parameter");
@@ -2937,7 +2839,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class CALLM
      * implements the assembler for conditional jump CALLM / CALL M
      */
-    public static class CALLM extends Mnemonic {
+    public static class CALLM extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("CALLM command requires 1 parameter");
@@ -2959,7 +2861,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class RET
      * implements the assembler for the RET command
      */
-    public static class RET extends Mnemonic {
+    public static class RET extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(parameters.hasMoreElements()) return getOpCodesConditional(parameters.nextToken(" ,"));
@@ -3014,7 +2916,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class RETI
      * implements the assembler for the RETI command
      */
-    public static class RETI extends Mnemonic {
+    public static class RETI extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             // RETI
@@ -3026,7 +2928,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class RETN
      * implements the assembler for the RETN command
      */
-    public static class RETN extends Mnemonic {
+    public static class RETN extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             // RETN
@@ -3038,7 +2940,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class RST
      * implements the assembler for the RST command
      */
-    public static class RST extends Mnemonic {
+    public static class RST extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("RST command requires 1 parameter");
@@ -3061,7 +2963,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class IN
      * implements the assembler for the IN command
      */
-    public static class IN extends Mnemonic {
+    public static class IN extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("IN command requires 2 parameters");
@@ -3090,7 +2992,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class INI
      * implements the assembler for the INI command
      */
-    public static class INI extends Mnemonic {
+    public static class INI extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             // INI
@@ -3102,7 +3004,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class INIR
      * implements the assembler for the INIR command
      */
-    public static class INIR extends Mnemonic {
+    public static class INIR extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             // INI
@@ -3114,7 +3016,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class IND
      * implements the assembler for the IND command
      */
-    public static class IND extends Mnemonic {
+    public static class IND extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             // INI
@@ -3126,7 +3028,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class INDR
      * implements the assembler for the INDR command
      */
-    public static class INDR extends Mnemonic {
+    public static class INDR extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             // INI
@@ -3138,7 +3040,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class OUT
      * implements the assembler for the OUT command
      */
-    public static class OUT extends Mnemonic {
+    public static class OUT extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             if(!parameters.hasMoreElements()) throw new SyntaxErrorException("OUT command requires 2 parameters");
@@ -3167,7 +3069,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class OUTI
      * implements the assembler for the OUTI command
      */
-    public static class OUTI extends Mnemonic {
+    public static class OUTI extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             // OUTI
@@ -3179,7 +3081,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class OTIR
      * implements the assembler for the OTIR command
      */
-    public static class OTIR extends Mnemonic {
+    public static class OTIR extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             // OTIR
@@ -3191,7 +3093,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class OUTD
      * implements the assembler for the OUTD command
      */
-    public static class OUTD extends Mnemonic {
+    public static class OUTD extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             // INI
@@ -3203,7 +3105,7 @@ public class Z80Debugger extends Z80 implements Debugger {
      * Class OTDR
      * implements the assembler for the OTDR command
      */
-    public static class OTDR extends Mnemonic {
+    public static class OTDR extends Z80Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             // INI
@@ -4057,8 +3959,8 @@ public class Z80Debugger extends Z80 implements Debugger {
     
     protected CodeAndLength getCodeAndLengthDD(long address, String IXIY) throws MemoryException, OpCodeException {
         byte byte2 = this.readMemory8(address);
-        int nn = 0;
-        int dd = 0;
+        int nn;
+        int dd;
         
         switch (Byte.toUnsignedInt(byte2)) {
             case 0x09:  // ADD In, BC
@@ -4786,6 +4688,13 @@ public class Z80Debugger extends Z80 implements Debugger {
         }
     }
     
+    /**
+     * Returns the bytecode for a given assembler mnemonic
+     * 
+     * @param mnemonic (String) the mnemonic
+     * @return the byte code (byte[])
+     * @throws SyntaxErrorException if there was a syntax error
+     */
     @Override
     public byte[] translate(String mnemonic) throws SyntaxErrorException {
         mnemonic = mnemonic.toUpperCase();
@@ -4805,14 +4714,13 @@ public class Z80Debugger extends Z80 implements Debugger {
             
             return opCodes;
         }
-        catch (Exception ex) {
-            ex.printStackTrace();
+        catch (SyntaxErrorException sex) {
+            throw sex;
         }
-        
-        
-        System.out.println(mnem1);
-        
-        return null;
+        catch (ClassNotFoundException | IllegalAccessException | InstantiationException ex) {
+            Logger.getLogger(DebuggerGUI.class.getName()).log(Level.SEVERE, null, ex);
+            throw new SyntaxErrorException("Syntax error in <" + mnemonic + ">");
+        }
     }
     
     public static void main(String[] args) throws Exception {
