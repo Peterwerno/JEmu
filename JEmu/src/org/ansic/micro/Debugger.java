@@ -19,6 +19,7 @@
 package org.ansic.micro;
 
 import java.util.List;
+import java.util.StringTokenizer;
 
 /**
  * This interface defines methods that a debugger interface must provide for a
@@ -27,6 +28,108 @@ import java.util.List;
  * @author peter
  */
 public interface Debugger extends CPU {
+    public abstract static class Mnemonic {
+        /**
+         * Checks if a string "param" is within a list "optList" (comma 
+         * separated list of strings)
+         * 
+         * @param param
+         * @param optList
+         * @return 
+         */
+        protected boolean isIn(String param, String optList) {
+            StringTokenizer st = new StringTokenizer(optList, ",");
+            while(st.hasMoreTokens()) {
+                if(param.equals(st.nextToken()))
+                    return true;
+            }
+            return false;
+        }
+        
+        protected boolean isNumeric(String param) {
+            int value = 0;
+            
+            // $ indicates hex value
+            if(param.startsWith("$")) {
+                try {
+                    value = Integer.parseInt(param.substring(1), 16);
+                    return true;
+                }
+                catch (NumberFormatException ex) {
+                    
+                }
+            }
+            // b indicates binary value
+            else if(param.startsWith("b")) {
+                try {
+                    value = Integer.parseInt(param.substring(1), 2);
+                    return true;
+                }
+                catch (NumberFormatException ex) {
+                    
+                }
+            }
+            // otherwise, decimal
+            else {
+                try {
+                    value = Integer.parseInt(param);
+                    return true;
+                }
+                catch (NumberFormatException ex) {
+                    
+                }
+            }
+            
+            return false;
+        }
+        
+        /**
+         * Returns the numeric value of a parameter
+         * 
+         * @param param
+         * @return
+         * @throws SyntaxErrorException 
+         */
+        protected int getNumeric(String param) throws SyntaxErrorException {
+            int value;
+            
+            // $ indicates hex value
+            if(param.startsWith("$")) {
+                try {
+                    value = Integer.parseInt(param.substring(1), 16);
+                    return value;
+                }
+                catch (NumberFormatException ex) {
+                    // exception thrown below
+                }
+            }
+            // b indicates binary value
+            else if(param.startsWith("b")) {
+                try {
+                    value = Integer.parseInt(param.substring(1), 2);
+                    return value;
+                }
+                catch (NumberFormatException ex) {
+                    // exception thrown below
+                }
+            }
+            // otherwise, decimal
+            else {
+                try {
+                    value = Integer.parseInt(param);
+                    return value;
+                }
+                catch (NumberFormatException ex) {
+                    // exception thrown below
+                }
+            }
+            
+            throw new SyntaxErrorException(param + " is not numeric value");
+        }
+        
+        public abstract byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException;
+    }
+    
     /**
      * Subclass combinig code length and opcode as string which is used as a 
      * return type in getCodeAndLength
@@ -162,5 +265,12 @@ public interface Debugger extends CPU {
      */
     public byte readMemoryByte(long address) throws MemoryException;
     
+    /**
+     * Writes a byte to memory
+     * 
+     * @param address
+     * @param value
+     * @throws MemoryException 
+     */
     public void writeMemoryByte(long address, byte value) throws MemoryException;
 }
