@@ -1016,10 +1016,43 @@ public class SeikoUC2000Debugger extends SeikoUC2000 implements Debugger {
                 
                 if((value < 0) || (value > 255)) throw new SyntaxErrorException("Value must be within [0..255]");
                 
-                return new byte[]{(byte)(0x78 | (value>>6)), (byte)(0x10 | ((value & 0x38)<<5) | (value & 0x07))};
+                return new byte[]{(byte)(0x7C | (value>>6)), (byte)(0x10 | ((value & 0x38)<<5) | (value & 0x07))};
             }
             else
                 throw new SyntaxErrorException("Syntax error in STLI command");
+        }
+    }
+    
+    /**
+     * Class STLS
+     * implements the assembler for the STLS command
+     */
+    public static class STLS extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            return new byte[]{(byte)0x7C, (byte)0x00};
+        }
+    }
+    
+    /**
+     * Class STLALI
+     * implements the assembler for the STLALI command
+     */
+    public static class STLALI extends UC2000Mnemonic {
+        @Override
+        public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
+            if(!parameters.hasMoreElements()) throw new SyntaxErrorException("STLALI command requires 1 parameter");
+            String param1 = parameters.nextToken(" ,");
+            
+            if(isNumeric(param1)) {
+                int value = getNumeric(param1);
+                
+                if((value < 0) || (value > 255)) throw new SyntaxErrorException("Value must be within [0..255]");
+                
+                return new byte[]{(byte)(0x7C | (value>>6)), (byte)(0x18 | ((value & 0x38)<<5) | (value & 0x07))};
+            }
+            else
+                throw new SyntaxErrorException("Syntax error in STLALI command");
         }
     }
     
@@ -1315,10 +1348,10 @@ public class SeikoUC2000Debugger extends SeikoUC2000 implements Debugger {
     }
     
     /**
-     * Class NOP
-     * implements the assembler for the NOP command
+     * Class WFI
+     * implements the assembler for the WFI command
      */
-    public static class NOP extends UC2000Mnemonic {
+    public static class WFI extends UC2000Mnemonic {
         @Override
         public byte[] getOpCodes(StringTokenizer parameters) throws SyntaxErrorException {
             return new byte[]{(byte)0xBC, (byte)0x00};
@@ -1697,7 +1730,19 @@ public class SeikoUC2000Debugger extends SeikoUC2000 implements Debugger {
                 
             case 0x7C00:    // STLI I
                 // TODO: Some varints are not yet documented here!!
-                return new CodeAndLength(2, "STLI $" + Integer.toHexString((opCode & 0x03C0) >> 6) + Integer.toHexString(((opCode & 0x0020) >> 2) | (opCode & 0x0007)));
+                switch (opCode & 0x0018) {
+                    case 0x0000:    // STLS
+                        return new CodeAndLength(2, "STLS");
+                        
+                    case 0x0010:    // STLI
+                        return new CodeAndLength(2, "STLI $" + Integer.toHexString((opCode & 0x03C0) >> 6) + Integer.toHexString(((opCode & 0x0020) >> 2) | (opCode & 0x0007)));
+
+                    case 0x0018:    // STLALI                        
+                        return new CodeAndLength(2, "STLALI $" + Integer.toHexString((opCode & 0x03C0) >> 6) + Integer.toHexString(((opCode & 0x0020) >> 2) | (opCode & 0x0007)));
+                        
+                    default:
+                        throw new OpCodeException("Illegal opcode " + opCode);
+                }
                 
             case 0x8000:    // MOV Rd, Rs
                 return new CodeAndLength(2, "MOV R" + Integer.toString(d) + ", R" + Integer.toString(s));
@@ -1755,9 +1800,9 @@ public class SeikoUC2000Debugger extends SeikoUC2000 implements Debugger {
             case 0xB800:    // IJMR R
                 return new CodeAndLength(2, "IJMR R" + Integer.toString(d));
                 
-            case 0xBC00:    // NOP
+            case 0xBC00:    // WFI
                 // Not all opcodes are identified yet
-                return new CodeAndLength(2, "NOP");
+                return new CodeAndLength(2, "WFI");
                 
             case 0xC000:    // JMP A
             case 0xC400:

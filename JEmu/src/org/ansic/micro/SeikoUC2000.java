@@ -1037,18 +1037,40 @@ public class SeikoUC2000 implements CPU, IRQHandler {
     
     /**
      * Operation STLI - write byte to LCD data register
+     *           STLS - write byte from SA to LCD data register
+     *           STLALI - write byte to LCD address and data register
      * 
      * @param opCode
      * @return
      * @throws MemoryException 
      */
-    protected int opSTLI(int opCode) throws MemoryException {
-        int high = (opCode & 0x03E0)>>2;
-        int val = (opCode & 0x0007) | high;
+    protected int opSTLI(int opCode) throws OpCodeException, MemoryException {
+        int high;
+        int val;
         
-        this.writeIO8(1, (byte)(val));
+        switch (opCode & 0x0018) {
+            case 0x0000:    // STLS
+                this.writeIO8(1, this.readMemory8(this.regSA++));
+                break;
+                
+            case 0x0010:    // STLI
+                high = (opCode & 0x03E0)>>2;
+                val = (opCode & 0x0007) | high;
+                this.writeIO8(1, (byte)(val));
+                break;
+                
+            case 0x0018:    // STLALI
+                high = (opCode & 0x03E0)>>2;
+                val = (opCode & 0x0007) | high;
+                this.writeIO8(0, (byte)(val));
+                this.writeIO8(1, (byte)(val));
+                break;
+                
+            default:
+                throw new OpCodeException("Illegal Opcode " + opCode);
+        }
+        
         this.regPC+=2;
-        
         return 2;
     }
     
@@ -1304,12 +1326,13 @@ public class SeikoUC2000 implements CPU, IRQHandler {
     }
     
     /**
-     * Operation NOP - don't do anything
+     * Operation WFI - Wait for Interrupt
      * 
      * @param opCode
      * @return 
      */
-    protected int opNOP(int opCode) {
+    protected int opWFI(int opCode) {
+        // TODO: Code the waiting using synchronization?
         this.regPC+=2;
         return 2;
     }
@@ -1550,7 +1573,7 @@ public class SeikoUC2000 implements CPU, IRQHandler {
         if(opCode == 0xB001) return opHLT(opCode);
         if((opCode >= 0xB400) && (opCode <= 0xB7FF)) return opCPFJR(opCode);
         if((opCode >= 0xB800) && (opCode <= 0xBBFF)) return opIJMR(opCode);
-        if((opCode >= 0xBC00) && (opCode <= 0xBFFF)) return opNOP(opCode);
+        if((opCode >= 0xBC00) && (opCode <= 0xBFFF)) return opWFI(opCode);
         if((opCode >= 0xC000) && (opCode <= 0xCFFF)) return opJMP(opCode);
         if((opCode >= 0xD000) && (opCode <= 0xD3FF)) return opJZ(opCode);
         if((opCode >= 0xD400) && (opCode <= 0xD7FF)) return opJNZ(opCode);
