@@ -93,6 +93,16 @@ public class RAMMemoryLittleEndian implements Memory {
     }
 
     @Override
+    public int getBitSize() {
+        return 8;
+    }
+
+    @Override
+    public int getContent(long address) throws MemoryException {
+        return Byte.toUnsignedInt(getByte(address));
+    }
+    
+    @Override
     public byte getByte(long address) throws MemoryException {
         if((address < this.lowAddress) || (address >= this.highAddress))
             throw new MemoryException("address out of range");
@@ -129,6 +139,13 @@ public class RAMMemoryLittleEndian implements Memory {
         long byte8 = ((long)getByte(address + 7)) & 0xFF;
         
         return byte8<<56 + byte7<<48 + byte6<<40 + byte5<<32 + byte4<<24 + byte3<<16 + byte2<<8 + byte1;
+    }
+
+    @Override
+    public void setContent(long address, int value) throws MemoryException {
+        if((address < this.lowAddress) || (address >= this.highAddress))
+            throw new MemoryException("address out of range");
+        content[(int)(address - this.lowAddress)] = (byte)value;
     }
 
     @Override
@@ -180,5 +197,5 @@ public class RAMMemoryLittleEndian implements Memory {
         setByte(address + 6, (byte)byte7);
         setByte(address + 7, (byte)byte8);
     }
-    
+
 }
