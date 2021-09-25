@@ -63,6 +63,16 @@ public class SimpleIO implements IO {
     }
 
     @Override
+    public int getBitSize() {
+        return 8;
+    }
+
+    @Override
+    public int getContent(long address) throws MemoryException {
+        return getByte(address);
+    }
+    
+    @Override
     public byte getByte(long address) throws MemoryException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
@@ -83,6 +93,11 @@ public class SimpleIO implements IO {
     }
 
     @Override
+    public void setContent(long address, int value) throws MemoryException {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+    
+    @Override
     public void setByte(long address, byte value) throws MemoryException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
@@ -101,5 +116,5 @@ public class SimpleIO implements IO {
     public void setLong(long address, long value) throws MemoryException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-    
+
 }
