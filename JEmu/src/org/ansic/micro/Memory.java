@@ -68,6 +68,24 @@ public interface Memory {
     public boolean isLittleEndian();
     
     /**
+     * This method returns the default bit size of one item stored in this
+     * memory (e.g. 8 for 8bit memory, etc.)
+     * 
+     * @return the bit size (int)
+     */
+    public int getBitSize();
+    
+    /**
+     * Returns the content of the memory at a given address in the memory's 
+     * inherent bit size
+     * 
+     * @param address (long) the address
+     * @return the content (int)    - may have to be switched to long though!
+     * @throws MemoryException 
+     */
+    public int getContent(long address) throws MemoryException;
+    
+    /**
      * This method returns a single byte (8 bit) from the memory for a given
      * address
      * 
@@ -106,6 +124,16 @@ public interface Memory {
      * @throws MemoryException if there was a problem
      */
     public long getLong(long address) throws MemoryException;
+    
+    /**
+     * This method stores a single entry in memory of the inherent size of the
+     * memory implementation at the given address
+     * 
+     * @param address (long) the memory address
+     * @param value (int) the value to store (potentially needs to be long?)
+     * @throws MemoryException if there was a problem
+     */
+    public void setContent(long address, int value) throws MemoryException;
     
     /**
      * This method stores a single byte (8 bit) in memory at the given address
