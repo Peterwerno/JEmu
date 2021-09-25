@@ -520,6 +520,16 @@ public class SeikoUC2000Display extends JFrame implements IO, ActionListener {
     }
 
     @Override
+    public int getBitSize() {
+        return 8;
+    }
+
+    @Override
+    public int getContent(long address) throws MemoryException {
+        return getByte(address);
+    }
+
+    @Override
     public byte getByte(long address) throws MemoryException {
         switch ((int)address) {
             case 0x00:  // button pressed (todo)
@@ -564,6 +574,11 @@ public class SeikoUC2000Display extends JFrame implements IO, ActionListener {
     @Override
     public long getLong(long address) throws MemoryException {
         throw new MemoryException("Cannot read from LCD Screen");
+    }
+    
+    @Override
+    public void setContent(long address, int value) throws MemoryException {
+        setByte(address, (byte)value);
     }
 
     @Override
