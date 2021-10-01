@@ -16,14 +16,28 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301  USA
  */
-package org.ansic.micro;
+package org.jemu.micro;
 
 /**
- * This interface defines an IO (range) which is required by some processors
- * such as the Z80.
- * 
+ *
  * @author peter
  */
-public interface IO extends Memory {
-    
+public class SyntaxErrorException extends Exception {
+
+    /**
+     * Creates a new instance of <code>SyntaxErrorException</code> without
+     * detail message.
+     */
+    public SyntaxErrorException() {
+    }
+
+    /**
+     * Constructs an instance of <code>SyntaxErrorException</code> with the
+     * specified detail message.
+     *
+     * @param msg the detail message.
+     */
+    public SyntaxErrorException(String msg) {
+        super(msg);
+    }
 }

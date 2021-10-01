@@ -16,28 +16,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301  USA
  */
-package org.ansic.micro;
+package org.jemu.micro;
 
 /**
- *
+ * This interface must be implemented by a processor impementation that should
+ * be able to handle IRQ requests
+ * 
  * @author peter
  */
-public class MemoryException extends Exception {
-
-    /**
-     * Creates a new instance of <code>MemoryException</code> without detail
-     * message.
-     */
-    public MemoryException() {
-    }
-
-    /**
-     * Constructs an instance of <code>MemoryException</code> with the specified
-     * detail message.
-     *
-     * @param msg the detail message.
-     */
-    public MemoryException(String msg) {
-        super(msg);
-    }
+public interface IRQHandler {
+    public void handleIRQ(int IRQNumber);
 }

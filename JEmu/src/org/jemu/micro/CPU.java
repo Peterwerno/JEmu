@@ -16,14 +16,29 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301  USA
  */
-package org.ansic.micro;
+package org.jemu.micro;
+
+import java.util.List;
 
 /**
- * This interface must be implemented by a processor impementation that should
- * be able to handle IRQ requests
+ * This interface defines the methods that must be implemented by a CPU
+ * class. 
  * 
  * @author peter
  */
-public interface IRQHandler {
-    public void handleIRQ(int IRQNumber);
+public interface CPU {
+    
+    /**
+     * This method is used to execute a single op code.
+     * It should perform the action behind the op code and return the number
+     * of clock cycles this *should* have taken. That way, the caller can
+     * then arrange for synchronisation
+     * 
+     * @return the number of clock cycles (int)
+     * @throws MemoryException
+     * @throws OpCodeException 
+     */
+    public int runNextOpCode() throws MemoryException, OpCodeException;
+    
+    
 }

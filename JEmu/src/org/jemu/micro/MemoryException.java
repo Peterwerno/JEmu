@@ -16,29 +16,28 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301  USA
  */
-package org.ansic.micro;
-
-import java.util.List;
+package org.jemu.micro;
 
 /**
- * This interface defines the methods that must be implemented by a CPU
- * class. 
- * 
+ *
  * @author peter
  */
-public interface CPU {
-    
+public class MemoryException extends Exception {
+
     /**
-     * This method is used to execute a single op code.
-     * It should perform the action behind the op code and return the number
-     * of clock cycles this *should* have taken. That way, the caller can
-     * then arrange for synchronisation
-     * 
-     * @return the number of clock cycles (int)
-     * @throws MemoryException
-     * @throws OpCodeException 
+     * Creates a new instance of <code>MemoryException</code> without detail
+     * message.
      */
-    public int runNextOpCode() throws MemoryException, OpCodeException;
-    
-    
+    public MemoryException() {
+    }
+
+    /**
+     * Constructs an instance of <code>MemoryException</code> with the specified
+     * detail message.
+     *
+     * @param msg the detail message.
+     */
+    public MemoryException(String msg) {
+        super(msg);
+    }
 }

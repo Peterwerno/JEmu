@@ -3,28 +3,28 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.ansic.micro;
+package org.jemu.micro;
 
 /**
  *
  * @author peter
  */
-public class IllegalOpCodeException extends Exception {
+public class IllegalRegisterException extends Exception {
 
     /**
-     * Creates a new instance of <code>IllegalOpCodeException</code> without
+     * Creates a new instance of <code>IllegalRegisterException</code> without
      * detail message.
      */
-    public IllegalOpCodeException() {
+    public IllegalRegisterException() {
     }
 
     /**
-     * Constructs an instance of <code>IllegalOpCodeException</code> with the
+     * Constructs an instance of <code>IllegalRegisterException</code> with the
      * specified detail message.
      *
      * @param msg the detail message.
      */
-    public IllegalOpCodeException(String msg) {
+    public IllegalRegisterException(String msg) {
         super(msg);
     }
 }
