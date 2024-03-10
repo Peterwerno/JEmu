@@ -18,7 +18,7 @@
  */
 package org.jemu.micro;
 
-import java.util.List;
+import java.util.List; 
 
 /**
  * This interface defines the methods that must be implemented by a CPU
